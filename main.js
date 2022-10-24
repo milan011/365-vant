@@ -1,4 +1,8 @@
+import store from './store';
 import App from './App'
+import util from './untils/func.js'
+
+Vue.use(util)
 
 // #ifndef VUE3
 import Vue from 'vue'
@@ -16,7 +20,8 @@ import { createSSRApp } from 'vue'
 export function createApp() {
   const app = createSSRApp(App)
   return {
-    app
+    app,
+		store
   }
 }
 // #endif

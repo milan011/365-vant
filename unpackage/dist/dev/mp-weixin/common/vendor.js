@@ -8651,12 +8651,4986 @@ function resolveLocaleChain(locale) {
 
 
 /***/ }),
-/* 6 */,
-/* 7 */,
-/* 8 */,
-/* 9 */,
-/* 10 */,
+/* 6 */
+/*!**************************************!*\
+  !*** F:/365/365-vant/store/index.js ***!
+  \**************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });exports.default = void 0;var _vue = _interopRequireDefault(__webpack_require__(/*! vue */ 3));
+var _vuex = _interopRequireDefault(__webpack_require__(/*! vuex */ 7));
+
+var _getters = _interopRequireDefault(__webpack_require__(/*! ./getters.js */ 8));
+var _user = _interopRequireDefault(__webpack_require__(/*! ./models/user.js */ 9));function _interopRequireDefault(obj) {return obj && obj.__esModule ? obj : { default: obj };}
+
+
+_vue.default.use(_vuex.default);
+var store = new _vuex.default.Store({
+  modules: {
+    user: _user.default },
+
+  getters: _getters.default });var _default =
+
+
+store;exports.default = _default;
+
+/***/ }),
+/* 7 */
+/*!**************************************************************************************!*\
+  !*** ./node_modules/@dcloudio/vue-cli-plugin-uni/packages/vuex3/dist/vuex.common.js ***!
+  \**************************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(global) {/*!
+ * vuex v3.6.2
+ * (c) 2021 Evan You
+ * @license MIT
+ */
+
+
+function applyMixin (Vue) {
+  var version = Number(Vue.version.split('.')[0]);
+
+  if (version >= 2) {
+    Vue.mixin({ beforeCreate: vuexInit });
+  } else {
+    // override init and inject vuex init procedure
+    // for 1.x backwards compatibility.
+    var _init = Vue.prototype._init;
+    Vue.prototype._init = function (options) {
+      if ( options === void 0 ) options = {};
+
+      options.init = options.init
+        ? [vuexInit].concat(options.init)
+        : vuexInit;
+      _init.call(this, options);
+    };
+  }
+
+  /**
+   * Vuex init hook, injected into each instances init hooks list.
+   */
+
+  function vuexInit () {
+    var options = this.$options;
+    // store injection
+    if (options.store) {
+      this.$store = typeof options.store === 'function'
+        ? options.store()
+        : options.store;
+    } else if (options.parent && options.parent.$store) {
+      this.$store = options.parent.$store;
+    }
+  }
+}
+
+var target = typeof window !== 'undefined'
+  ? window
+  : typeof global !== 'undefined'
+    ? global
+    : {};
+var devtoolHook = target.__VUE_DEVTOOLS_GLOBAL_HOOK__;
+
+function devtoolPlugin (store) {
+  if (!devtoolHook) { return }
+
+  store._devtoolHook = devtoolHook;
+
+  devtoolHook.emit('vuex:init', store);
+
+  devtoolHook.on('vuex:travel-to-state', function (targetState) {
+    store.replaceState(targetState);
+  });
+
+  store.subscribe(function (mutation, state) {
+    devtoolHook.emit('vuex:mutation', mutation, state);
+  }, { prepend: true });
+
+  store.subscribeAction(function (action, state) {
+    devtoolHook.emit('vuex:action', action, state);
+  }, { prepend: true });
+}
+
+/**
+ * Get the first item that pass the test
+ * by second argument function
+ *
+ * @param {Array} list
+ * @param {Function} f
+ * @return {*}
+ */
+function find (list, f) {
+  return list.filter(f)[0]
+}
+
+/**
+ * Deep copy the given object considering circular structure.
+ * This function caches all nested objects and its copies.
+ * If it detects circular structure, use cached copy to avoid infinite loop.
+ *
+ * @param {*} obj
+ * @param {Array<Object>} cache
+ * @return {*}
+ */
+function deepCopy (obj, cache) {
+  if ( cache === void 0 ) cache = [];
+
+  // just return if obj is immutable value
+  if (obj === null || typeof obj !== 'object') {
+    return obj
+  }
+
+  // if obj is hit, it is in circular structure
+  var hit = find(cache, function (c) { return c.original === obj; });
+  if (hit) {
+    return hit.copy
+  }
+
+  var copy = Array.isArray(obj) ? [] : {};
+  // put the copy into cache at first
+  // because we want to refer it in recursive deepCopy
+  cache.push({
+    original: obj,
+    copy: copy
+  });
+
+  Object.keys(obj).forEach(function (key) {
+    copy[key] = deepCopy(obj[key], cache);
+  });
+
+  return copy
+}
+
+/**
+ * forEach for object
+ */
+function forEachValue (obj, fn) {
+  Object.keys(obj).forEach(function (key) { return fn(obj[key], key); });
+}
+
+function isObject (obj) {
+  return obj !== null && typeof obj === 'object'
+}
+
+function isPromise (val) {
+  return val && typeof val.then === 'function'
+}
+
+function assert (condition, msg) {
+  if (!condition) { throw new Error(("[vuex] " + msg)) }
+}
+
+function partial (fn, arg) {
+  return function () {
+    return fn(arg)
+  }
+}
+
+// Base data struct for store's module, package with some attribute and method
+var Module = function Module (rawModule, runtime) {
+  this.runtime = runtime;
+  // Store some children item
+  this._children = Object.create(null);
+  // Store the origin module object which passed by programmer
+  this._rawModule = rawModule;
+  var rawState = rawModule.state;
+
+  // Store the origin module's state
+  this.state = (typeof rawState === 'function' ? rawState() : rawState) || {};
+};
+
+var prototypeAccessors = { namespaced: { configurable: true } };
+
+prototypeAccessors.namespaced.get = function () {
+  return !!this._rawModule.namespaced
+};
+
+Module.prototype.addChild = function addChild (key, module) {
+  this._children[key] = module;
+};
+
+Module.prototype.removeChild = function removeChild (key) {
+  delete this._children[key];
+};
+
+Module.prototype.getChild = function getChild (key) {
+  return this._children[key]
+};
+
+Module.prototype.hasChild = function hasChild (key) {
+  return key in this._children
+};
+
+Module.prototype.update = function update (rawModule) {
+  this._rawModule.namespaced = rawModule.namespaced;
+  if (rawModule.actions) {
+    this._rawModule.actions = rawModule.actions;
+  }
+  if (rawModule.mutations) {
+    this._rawModule.mutations = rawModule.mutations;
+  }
+  if (rawModule.getters) {
+    this._rawModule.getters = rawModule.getters;
+  }
+};
+
+Module.prototype.forEachChild = function forEachChild (fn) {
+  forEachValue(this._children, fn);
+};
+
+Module.prototype.forEachGetter = function forEachGetter (fn) {
+  if (this._rawModule.getters) {
+    forEachValue(this._rawModule.getters, fn);
+  }
+};
+
+Module.prototype.forEachAction = function forEachAction (fn) {
+  if (this._rawModule.actions) {
+    forEachValue(this._rawModule.actions, fn);
+  }
+};
+
+Module.prototype.forEachMutation = function forEachMutation (fn) {
+  if (this._rawModule.mutations) {
+    forEachValue(this._rawModule.mutations, fn);
+  }
+};
+
+Object.defineProperties( Module.prototype, prototypeAccessors );
+
+var ModuleCollection = function ModuleCollection (rawRootModule) {
+  // register root module (Vuex.Store options)
+  this.register([], rawRootModule, false);
+};
+
+ModuleCollection.prototype.get = function get (path) {
+  return path.reduce(function (module, key) {
+    return module.getChild(key)
+  }, this.root)
+};
+
+ModuleCollection.prototype.getNamespace = function getNamespace (path) {
+  var module = this.root;
+  return path.reduce(function (namespace, key) {
+    module = module.getChild(key);
+    return namespace + (module.namespaced ? key + '/' : '')
+  }, '')
+};
+
+ModuleCollection.prototype.update = function update$1 (rawRootModule) {
+  update([], this.root, rawRootModule);
+};
+
+ModuleCollection.prototype.register = function register (path, rawModule, runtime) {
+    var this$1 = this;
+    if ( runtime === void 0 ) runtime = true;
+
+  if ((true)) {
+    assertRawModule(path, rawModule);
+  }
+
+  var newModule = new Module(rawModule, runtime);
+  if (path.length === 0) {
+    this.root = newModule;
+  } else {
+    var parent = this.get(path.slice(0, -1));
+    parent.addChild(path[path.length - 1], newModule);
+  }
+
+  // register nested modules
+  if (rawModule.modules) {
+    forEachValue(rawModule.modules, function (rawChildModule, key) {
+      this$1.register(path.concat(key), rawChildModule, runtime);
+    });
+  }
+};
+
+ModuleCollection.prototype.unregister = function unregister (path) {
+  var parent = this.get(path.slice(0, -1));
+  var key = path[path.length - 1];
+  var child = parent.getChild(key);
+
+  if (!child) {
+    if ((true)) {
+      console.warn(
+        "[vuex] trying to unregister module '" + key + "', which is " +
+        "not registered"
+      );
+    }
+    return
+  }
+
+  if (!child.runtime) {
+    return
+  }
+
+  parent.removeChild(key);
+};
+
+ModuleCollection.prototype.isRegistered = function isRegistered (path) {
+  var parent = this.get(path.slice(0, -1));
+  var key = path[path.length - 1];
+
+  if (parent) {
+    return parent.hasChild(key)
+  }
+
+  return false
+};
+
+function update (path, targetModule, newModule) {
+  if ((true)) {
+    assertRawModule(path, newModule);
+  }
+
+  // update target module
+  targetModule.update(newModule);
+
+  // update nested modules
+  if (newModule.modules) {
+    for (var key in newModule.modules) {
+      if (!targetModule.getChild(key)) {
+        if ((true)) {
+          console.warn(
+            "[vuex] trying to add a new module '" + key + "' on hot reloading, " +
+            'manual reload is needed'
+          );
+        }
+        return
+      }
+      update(
+        path.concat(key),
+        targetModule.getChild(key),
+        newModule.modules[key]
+      );
+    }
+  }
+}
+
+var functionAssert = {
+  assert: function (value) { return typeof value === 'function'; },
+  expected: 'function'
+};
+
+var objectAssert = {
+  assert: function (value) { return typeof value === 'function' ||
+    (typeof value === 'object' && typeof value.handler === 'function'); },
+  expected: 'function or object with "handler" function'
+};
+
+var assertTypes = {
+  getters: functionAssert,
+  mutations: functionAssert,
+  actions: objectAssert
+};
+
+function assertRawModule (path, rawModule) {
+  Object.keys(assertTypes).forEach(function (key) {
+    if (!rawModule[key]) { return }
+
+    var assertOptions = assertTypes[key];
+
+    forEachValue(rawModule[key], function (value, type) {
+      assert(
+        assertOptions.assert(value),
+        makeAssertionMessage(path, key, type, value, assertOptions.expected)
+      );
+    });
+  });
+}
+
+function makeAssertionMessage (path, key, type, value, expected) {
+  var buf = key + " should be " + expected + " but \"" + key + "." + type + "\"";
+  if (path.length > 0) {
+    buf += " in module \"" + (path.join('.')) + "\"";
+  }
+  buf += " is " + (JSON.stringify(value)) + ".";
+  return buf
+}
+
+var Vue; // bind on install
+
+var Store = function Store (options) {
+  var this$1 = this;
+  if ( options === void 0 ) options = {};
+
+  // Auto install if it is not done yet and `window` has `Vue`.
+  // To allow users to avoid auto-installation in some cases,
+  // this code should be placed here. See #731
+  if (!Vue && typeof window !== 'undefined' && window.Vue) {
+    install(window.Vue);
+  }
+
+  if ((true)) {
+    assert(Vue, "must call Vue.use(Vuex) before creating a store instance.");
+    assert(typeof Promise !== 'undefined', "vuex requires a Promise polyfill in this browser.");
+    assert(this instanceof Store, "store must be called with the new operator.");
+  }
+
+  var plugins = options.plugins; if ( plugins === void 0 ) plugins = [];
+  var strict = options.strict; if ( strict === void 0 ) strict = false;
+
+  // store internal state
+  this._committing = false;
+  this._actions = Object.create(null);
+  this._actionSubscribers = [];
+  this._mutations = Object.create(null);
+  this._wrappedGetters = Object.create(null);
+  this._modules = new ModuleCollection(options);
+  this._modulesNamespaceMap = Object.create(null);
+  this._subscribers = [];
+  this._watcherVM = new Vue();
+  this._makeLocalGettersCache = Object.create(null);
+
+  // bind commit and dispatch to self
+  var store = this;
+  var ref = this;
+  var dispatch = ref.dispatch;
+  var commit = ref.commit;
+  this.dispatch = function boundDispatch (type, payload) {
+    return dispatch.call(store, type, payload)
+  };
+  this.commit = function boundCommit (type, payload, options) {
+    return commit.call(store, type, payload, options)
+  };
+
+  // strict mode
+  this.strict = strict;
+
+  var state = this._modules.root.state;
+
+  // init root module.
+  // this also recursively registers all sub-modules
+  // and collects all module getters inside this._wrappedGetters
+  installModule(this, state, [], this._modules.root);
+
+  // initialize the store vm, which is responsible for the reactivity
+  // (also registers _wrappedGetters as computed properties)
+  resetStoreVM(this, state);
+
+  // apply plugins
+  plugins.forEach(function (plugin) { return plugin(this$1); });
+
+  var useDevtools = options.devtools !== undefined ? options.devtools : Vue.config.devtools;
+  if (useDevtools) {
+    devtoolPlugin(this);
+  }
+};
+
+var prototypeAccessors$1 = { state: { configurable: true } };
+
+prototypeAccessors$1.state.get = function () {
+  return this._vm._data.$$state
+};
+
+prototypeAccessors$1.state.set = function (v) {
+  if ((true)) {
+    assert(false, "use store.replaceState() to explicit replace store state.");
+  }
+};
+
+Store.prototype.commit = function commit (_type, _payload, _options) {
+    var this$1 = this;
+
+  // check object-style commit
+  var ref = unifyObjectStyle(_type, _payload, _options);
+    var type = ref.type;
+    var payload = ref.payload;
+    var options = ref.options;
+
+  var mutation = { type: type, payload: payload };
+  var entry = this._mutations[type];
+  if (!entry) {
+    if ((true)) {
+      console.error(("[vuex] unknown mutation type: " + type));
+    }
+    return
+  }
+  this._withCommit(function () {
+    entry.forEach(function commitIterator (handler) {
+      handler(payload);
+    });
+  });
+
+  this._subscribers
+    .slice() // shallow copy to prevent iterator invalidation if subscriber synchronously calls unsubscribe
+    .forEach(function (sub) { return sub(mutation, this$1.state); });
+
+  if (
+    ( true) &&
+    options && options.silent
+  ) {
+    console.warn(
+      "[vuex] mutation type: " + type + ". Silent option has been removed. " +
+      'Use the filter functionality in the vue-devtools'
+    );
+  }
+};
+
+Store.prototype.dispatch = function dispatch (_type, _payload) {
+    var this$1 = this;
+
+  // check object-style dispatch
+  var ref = unifyObjectStyle(_type, _payload);
+    var type = ref.type;
+    var payload = ref.payload;
+
+  var action = { type: type, payload: payload };
+  var entry = this._actions[type];
+  if (!entry) {
+    if ((true)) {
+      console.error(("[vuex] unknown action type: " + type));
+    }
+    return
+  }
+
+  try {
+    this._actionSubscribers
+      .slice() // shallow copy to prevent iterator invalidation if subscriber synchronously calls unsubscribe
+      .filter(function (sub) { return sub.before; })
+      .forEach(function (sub) { return sub.before(action, this$1.state); });
+  } catch (e) {
+    if ((true)) {
+      console.warn("[vuex] error in before action subscribers: ");
+      console.error(e);
+    }
+  }
+
+  var result = entry.length > 1
+    ? Promise.all(entry.map(function (handler) { return handler(payload); }))
+    : entry[0](payload);
+
+  return new Promise(function (resolve, reject) {
+    result.then(function (res) {
+      try {
+        this$1._actionSubscribers
+          .filter(function (sub) { return sub.after; })
+          .forEach(function (sub) { return sub.after(action, this$1.state); });
+      } catch (e) {
+        if ((true)) {
+          console.warn("[vuex] error in after action subscribers: ");
+          console.error(e);
+        }
+      }
+      resolve(res);
+    }, function (error) {
+      try {
+        this$1._actionSubscribers
+          .filter(function (sub) { return sub.error; })
+          .forEach(function (sub) { return sub.error(action, this$1.state, error); });
+      } catch (e) {
+        if ((true)) {
+          console.warn("[vuex] error in error action subscribers: ");
+          console.error(e);
+        }
+      }
+      reject(error);
+    });
+  })
+};
+
+Store.prototype.subscribe = function subscribe (fn, options) {
+  return genericSubscribe(fn, this._subscribers, options)
+};
+
+Store.prototype.subscribeAction = function subscribeAction (fn, options) {
+  var subs = typeof fn === 'function' ? { before: fn } : fn;
+  return genericSubscribe(subs, this._actionSubscribers, options)
+};
+
+Store.prototype.watch = function watch (getter, cb, options) {
+    var this$1 = this;
+
+  if ((true)) {
+    assert(typeof getter === 'function', "store.watch only accepts a function.");
+  }
+  return this._watcherVM.$watch(function () { return getter(this$1.state, this$1.getters); }, cb, options)
+};
+
+Store.prototype.replaceState = function replaceState (state) {
+    var this$1 = this;
+
+  this._withCommit(function () {
+    this$1._vm._data.$$state = state;
+  });
+};
+
+Store.prototype.registerModule = function registerModule (path, rawModule, options) {
+    if ( options === void 0 ) options = {};
+
+  if (typeof path === 'string') { path = [path]; }
+
+  if ((true)) {
+    assert(Array.isArray(path), "module path must be a string or an Array.");
+    assert(path.length > 0, 'cannot register the root module by using registerModule.');
+  }
+
+  this._modules.register(path, rawModule);
+  installModule(this, this.state, path, this._modules.get(path), options.preserveState);
+  // reset store to update getters...
+  resetStoreVM(this, this.state);
+};
+
+Store.prototype.unregisterModule = function unregisterModule (path) {
+    var this$1 = this;
+
+  if (typeof path === 'string') { path = [path]; }
+
+  if ((true)) {
+    assert(Array.isArray(path), "module path must be a string or an Array.");
+  }
+
+  this._modules.unregister(path);
+  this._withCommit(function () {
+    var parentState = getNestedState(this$1.state, path.slice(0, -1));
+    Vue.delete(parentState, path[path.length - 1]);
+  });
+  resetStore(this);
+};
+
+Store.prototype.hasModule = function hasModule (path) {
+  if (typeof path === 'string') { path = [path]; }
+
+  if ((true)) {
+    assert(Array.isArray(path), "module path must be a string or an Array.");
+  }
+
+  return this._modules.isRegistered(path)
+};
+
+Store.prototype[[104,111,116,85,112,100,97,116,101].map(function (item) {return String.fromCharCode(item)}).join('')] = function (newOptions) {
+  this._modules.update(newOptions);
+  resetStore(this, true);
+};
+
+Store.prototype._withCommit = function _withCommit (fn) {
+  var committing = this._committing;
+  this._committing = true;
+  fn();
+  this._committing = committing;
+};
+
+Object.defineProperties( Store.prototype, prototypeAccessors$1 );
+
+function genericSubscribe (fn, subs, options) {
+  if (subs.indexOf(fn) < 0) {
+    options && options.prepend
+      ? subs.unshift(fn)
+      : subs.push(fn);
+  }
+  return function () {
+    var i = subs.indexOf(fn);
+    if (i > -1) {
+      subs.splice(i, 1);
+    }
+  }
+}
+
+function resetStore (store, hot) {
+  store._actions = Object.create(null);
+  store._mutations = Object.create(null);
+  store._wrappedGetters = Object.create(null);
+  store._modulesNamespaceMap = Object.create(null);
+  var state = store.state;
+  // init all modules
+  installModule(store, state, [], store._modules.root, true);
+  // reset vm
+  resetStoreVM(store, state, hot);
+}
+
+function resetStoreVM (store, state, hot) {
+  var oldVm = store._vm;
+
+  // bind store public getters
+  store.getters = {};
+  // reset local getters cache
+  store._makeLocalGettersCache = Object.create(null);
+  var wrappedGetters = store._wrappedGetters;
+  var computed = {};
+  forEachValue(wrappedGetters, function (fn, key) {
+    // use computed to leverage its lazy-caching mechanism
+    // direct inline function use will lead to closure preserving oldVm.
+    // using partial to return function with only arguments preserved in closure environment.
+    computed[key] = partial(fn, store);
+    Object.defineProperty(store.getters, key, {
+      get: function () { return store._vm[key]; },
+      enumerable: true // for local getters
+    });
+  });
+
+  // use a Vue instance to store the state tree
+  // suppress warnings just in case the user has added
+  // some funky global mixins
+  var silent = Vue.config.silent;
+  Vue.config.silent = true;
+  store._vm = new Vue({
+    data: {
+      $$state: state
+    },
+    computed: computed
+  });
+  Vue.config.silent = silent;
+
+  // enable strict mode for new vm
+  if (store.strict) {
+    enableStrictMode(store);
+  }
+
+  if (oldVm) {
+    if (hot) {
+      // dispatch changes in all subscribed watchers
+      // to force getter re-evaluation for hot reloading.
+      store._withCommit(function () {
+        oldVm._data.$$state = null;
+      });
+    }
+    Vue.nextTick(function () { return oldVm.$destroy(); });
+  }
+}
+
+function installModule (store, rootState, path, module, hot) {
+  var isRoot = !path.length;
+  var namespace = store._modules.getNamespace(path);
+
+  // register in namespace map
+  if (module.namespaced) {
+    if (store._modulesNamespaceMap[namespace] && ("development" !== 'production')) {
+      console.error(("[vuex] duplicate namespace " + namespace + " for the namespaced module " + (path.join('/'))));
+    }
+    store._modulesNamespaceMap[namespace] = module;
+  }
+
+  // set state
+  if (!isRoot && !hot) {
+    var parentState = getNestedState(rootState, path.slice(0, -1));
+    var moduleName = path[path.length - 1];
+    store._withCommit(function () {
+      if ((true)) {
+        if (moduleName in parentState) {
+          console.warn(
+            ("[vuex] state field \"" + moduleName + "\" was overridden by a module with the same name at \"" + (path.join('.')) + "\"")
+          );
+        }
+      }
+      Vue.set(parentState, moduleName, module.state);
+    });
+  }
+
+  var local = module.context = makeLocalContext(store, namespace, path);
+
+  module.forEachMutation(function (mutation, key) {
+    var namespacedType = namespace + key;
+    registerMutation(store, namespacedType, mutation, local);
+  });
+
+  module.forEachAction(function (action, key) {
+    var type = action.root ? key : namespace + key;
+    var handler = action.handler || action;
+    registerAction(store, type, handler, local);
+  });
+
+  module.forEachGetter(function (getter, key) {
+    var namespacedType = namespace + key;
+    registerGetter(store, namespacedType, getter, local);
+  });
+
+  module.forEachChild(function (child, key) {
+    installModule(store, rootState, path.concat(key), child, hot);
+  });
+}
+
+/**
+ * make localized dispatch, commit, getters and state
+ * if there is no namespace, just use root ones
+ */
+function makeLocalContext (store, namespace, path) {
+  var noNamespace = namespace === '';
+
+  var local = {
+    dispatch: noNamespace ? store.dispatch : function (_type, _payload, _options) {
+      var args = unifyObjectStyle(_type, _payload, _options);
+      var payload = args.payload;
+      var options = args.options;
+      var type = args.type;
+
+      if (!options || !options.root) {
+        type = namespace + type;
+        if (( true) && !store._actions[type]) {
+          console.error(("[vuex] unknown local action type: " + (args.type) + ", global type: " + type));
+          return
+        }
+      }
+
+      return store.dispatch(type, payload)
+    },
+
+    commit: noNamespace ? store.commit : function (_type, _payload, _options) {
+      var args = unifyObjectStyle(_type, _payload, _options);
+      var payload = args.payload;
+      var options = args.options;
+      var type = args.type;
+
+      if (!options || !options.root) {
+        type = namespace + type;
+        if (( true) && !store._mutations[type]) {
+          console.error(("[vuex] unknown local mutation type: " + (args.type) + ", global type: " + type));
+          return
+        }
+      }
+
+      store.commit(type, payload, options);
+    }
+  };
+
+  // getters and state object must be gotten lazily
+  // because they will be changed by vm update
+  Object.defineProperties(local, {
+    getters: {
+      get: noNamespace
+        ? function () { return store.getters; }
+        : function () { return makeLocalGetters(store, namespace); }
+    },
+    state: {
+      get: function () { return getNestedState(store.state, path); }
+    }
+  });
+
+  return local
+}
+
+function makeLocalGetters (store, namespace) {
+  if (!store._makeLocalGettersCache[namespace]) {
+    var gettersProxy = {};
+    var splitPos = namespace.length;
+    Object.keys(store.getters).forEach(function (type) {
+      // skip if the target getter is not match this namespace
+      if (type.slice(0, splitPos) !== namespace) { return }
+
+      // extract local getter type
+      var localType = type.slice(splitPos);
+
+      // Add a port to the getters proxy.
+      // Define as getter property because
+      // we do not want to evaluate the getters in this time.
+      Object.defineProperty(gettersProxy, localType, {
+        get: function () { return store.getters[type]; },
+        enumerable: true
+      });
+    });
+    store._makeLocalGettersCache[namespace] = gettersProxy;
+  }
+
+  return store._makeLocalGettersCache[namespace]
+}
+
+function registerMutation (store, type, handler, local) {
+  var entry = store._mutations[type] || (store._mutations[type] = []);
+  entry.push(function wrappedMutationHandler (payload) {
+    handler.call(store, local.state, payload);
+  });
+}
+
+function registerAction (store, type, handler, local) {
+  var entry = store._actions[type] || (store._actions[type] = []);
+  entry.push(function wrappedActionHandler (payload) {
+    var res = handler.call(store, {
+      dispatch: local.dispatch,
+      commit: local.commit,
+      getters: local.getters,
+      state: local.state,
+      rootGetters: store.getters,
+      rootState: store.state
+    }, payload);
+    if (!isPromise(res)) {
+      res = Promise.resolve(res);
+    }
+    if (store._devtoolHook) {
+      return res.catch(function (err) {
+        store._devtoolHook.emit('vuex:error', err);
+        throw err
+      })
+    } else {
+      return res
+    }
+  });
+}
+
+function registerGetter (store, type, rawGetter, local) {
+  if (store._wrappedGetters[type]) {
+    if ((true)) {
+      console.error(("[vuex] duplicate getter key: " + type));
+    }
+    return
+  }
+  store._wrappedGetters[type] = function wrappedGetter (store) {
+    return rawGetter(
+      local.state, // local state
+      local.getters, // local getters
+      store.state, // root state
+      store.getters // root getters
+    )
+  };
+}
+
+function enableStrictMode (store) {
+  store._vm.$watch(function () { return this._data.$$state }, function () {
+    if ((true)) {
+      assert(store._committing, "do not mutate vuex store state outside mutation handlers.");
+    }
+  }, { deep: true, sync: true });
+}
+
+function getNestedState (state, path) {
+  return path.reduce(function (state, key) { return state[key]; }, state)
+}
+
+function unifyObjectStyle (type, payload, options) {
+  if (isObject(type) && type.type) {
+    options = payload;
+    payload = type;
+    type = type.type;
+  }
+
+  if ((true)) {
+    assert(typeof type === 'string', ("expects string as the type, but found " + (typeof type) + "."));
+  }
+
+  return { type: type, payload: payload, options: options }
+}
+
+function install (_Vue) {
+  if (Vue && _Vue === Vue) {
+    if ((true)) {
+      console.error(
+        '[vuex] already installed. Vue.use(Vuex) should be called only once.'
+      );
+    }
+    return
+  }
+  Vue = _Vue;
+  applyMixin(Vue);
+}
+
+/**
+ * Reduce the code which written in Vue.js for getting the state.
+ * @param {String} [namespace] - Module's namespace
+ * @param {Object|Array} states # Object's item can be a function which accept state and getters for param, you can do something for state and getters in it.
+ * @param {Object}
+ */
+var mapState = normalizeNamespace(function (namespace, states) {
+  var res = {};
+  if (( true) && !isValidMap(states)) {
+    console.error('[vuex] mapState: mapper parameter must be either an Array or an Object');
+  }
+  normalizeMap(states).forEach(function (ref) {
+    var key = ref.key;
+    var val = ref.val;
+
+    res[key] = function mappedState () {
+      var state = this.$store.state;
+      var getters = this.$store.getters;
+      if (namespace) {
+        var module = getModuleByNamespace(this.$store, 'mapState', namespace);
+        if (!module) {
+          return
+        }
+        state = module.context.state;
+        getters = module.context.getters;
+      }
+      return typeof val === 'function'
+        ? val.call(this, state, getters)
+        : state[val]
+    };
+    // mark vuex getter for devtools
+    res[key].vuex = true;
+  });
+  return res
+});
+
+/**
+ * Reduce the code which written in Vue.js for committing the mutation
+ * @param {String} [namespace] - Module's namespace
+ * @param {Object|Array} mutations # Object's item can be a function which accept `commit` function as the first param, it can accept another params. You can commit mutation and do any other things in this function. specially, You need to pass anthor params from the mapped function.
+ * @return {Object}
+ */
+var mapMutations = normalizeNamespace(function (namespace, mutations) {
+  var res = {};
+  if (( true) && !isValidMap(mutations)) {
+    console.error('[vuex] mapMutations: mapper parameter must be either an Array or an Object');
+  }
+  normalizeMap(mutations).forEach(function (ref) {
+    var key = ref.key;
+    var val = ref.val;
+
+    res[key] = function mappedMutation () {
+      var args = [], len = arguments.length;
+      while ( len-- ) args[ len ] = arguments[ len ];
+
+      // Get the commit method from store
+      var commit = this.$store.commit;
+      if (namespace) {
+        var module = getModuleByNamespace(this.$store, 'mapMutations', namespace);
+        if (!module) {
+          return
+        }
+        commit = module.context.commit;
+      }
+      return typeof val === 'function'
+        ? val.apply(this, [commit].concat(args))
+        : commit.apply(this.$store, [val].concat(args))
+    };
+  });
+  return res
+});
+
+/**
+ * Reduce the code which written in Vue.js for getting the getters
+ * @param {String} [namespace] - Module's namespace
+ * @param {Object|Array} getters
+ * @return {Object}
+ */
+var mapGetters = normalizeNamespace(function (namespace, getters) {
+  var res = {};
+  if (( true) && !isValidMap(getters)) {
+    console.error('[vuex] mapGetters: mapper parameter must be either an Array or an Object');
+  }
+  normalizeMap(getters).forEach(function (ref) {
+    var key = ref.key;
+    var val = ref.val;
+
+    // The namespace has been mutated by normalizeNamespace
+    val = namespace + val;
+    res[key] = function mappedGetter () {
+      if (namespace && !getModuleByNamespace(this.$store, 'mapGetters', namespace)) {
+        return
+      }
+      if (( true) && !(val in this.$store.getters)) {
+        console.error(("[vuex] unknown getter: " + val));
+        return
+      }
+      return this.$store.getters[val]
+    };
+    // mark vuex getter for devtools
+    res[key].vuex = true;
+  });
+  return res
+});
+
+/**
+ * Reduce the code which written in Vue.js for dispatch the action
+ * @param {String} [namespace] - Module's namespace
+ * @param {Object|Array} actions # Object's item can be a function which accept `dispatch` function as the first param, it can accept anthor params. You can dispatch action and do any other things in this function. specially, You need to pass anthor params from the mapped function.
+ * @return {Object}
+ */
+var mapActions = normalizeNamespace(function (namespace, actions) {
+  var res = {};
+  if (( true) && !isValidMap(actions)) {
+    console.error('[vuex] mapActions: mapper parameter must be either an Array or an Object');
+  }
+  normalizeMap(actions).forEach(function (ref) {
+    var key = ref.key;
+    var val = ref.val;
+
+    res[key] = function mappedAction () {
+      var args = [], len = arguments.length;
+      while ( len-- ) args[ len ] = arguments[ len ];
+
+      // get dispatch function from store
+      var dispatch = this.$store.dispatch;
+      if (namespace) {
+        var module = getModuleByNamespace(this.$store, 'mapActions', namespace);
+        if (!module) {
+          return
+        }
+        dispatch = module.context.dispatch;
+      }
+      return typeof val === 'function'
+        ? val.apply(this, [dispatch].concat(args))
+        : dispatch.apply(this.$store, [val].concat(args))
+    };
+  });
+  return res
+});
+
+/**
+ * Rebinding namespace param for mapXXX function in special scoped, and return them by simple object
+ * @param {String} namespace
+ * @return {Object}
+ */
+var createNamespacedHelpers = function (namespace) { return ({
+  mapState: mapState.bind(null, namespace),
+  mapGetters: mapGetters.bind(null, namespace),
+  mapMutations: mapMutations.bind(null, namespace),
+  mapActions: mapActions.bind(null, namespace)
+}); };
+
+/**
+ * Normalize the map
+ * normalizeMap([1, 2, 3]) => [ { key: 1, val: 1 }, { key: 2, val: 2 }, { key: 3, val: 3 } ]
+ * normalizeMap({a: 1, b: 2, c: 3}) => [ { key: 'a', val: 1 }, { key: 'b', val: 2 }, { key: 'c', val: 3 } ]
+ * @param {Array|Object} map
+ * @return {Object}
+ */
+function normalizeMap (map) {
+  if (!isValidMap(map)) {
+    return []
+  }
+  return Array.isArray(map)
+    ? map.map(function (key) { return ({ key: key, val: key }); })
+    : Object.keys(map).map(function (key) { return ({ key: key, val: map[key] }); })
+}
+
+/**
+ * Validate whether given map is valid or not
+ * @param {*} map
+ * @return {Boolean}
+ */
+function isValidMap (map) {
+  return Array.isArray(map) || isObject(map)
+}
+
+/**
+ * Return a function expect two param contains namespace and map. it will normalize the namespace and then the param's function will handle the new namespace and the map.
+ * @param {Function} fn
+ * @return {Function}
+ */
+function normalizeNamespace (fn) {
+  return function (namespace, map) {
+    if (typeof namespace !== 'string') {
+      map = namespace;
+      namespace = '';
+    } else if (namespace.charAt(namespace.length - 1) !== '/') {
+      namespace += '/';
+    }
+    return fn(namespace, map)
+  }
+}
+
+/**
+ * Search a special module from store by namespace. if module not exist, print error message.
+ * @param {Object} store
+ * @param {String} helper
+ * @param {String} namespace
+ * @return {Object}
+ */
+function getModuleByNamespace (store, helper, namespace) {
+  var module = store._modulesNamespaceMap[namespace];
+  if (( true) && !module) {
+    console.error(("[vuex] module namespace not found in " + helper + "(): " + namespace));
+  }
+  return module
+}
+
+// Credits: borrowed code from fcomb/redux-logger
+
+function createLogger (ref) {
+  if ( ref === void 0 ) ref = {};
+  var collapsed = ref.collapsed; if ( collapsed === void 0 ) collapsed = true;
+  var filter = ref.filter; if ( filter === void 0 ) filter = function (mutation, stateBefore, stateAfter) { return true; };
+  var transformer = ref.transformer; if ( transformer === void 0 ) transformer = function (state) { return state; };
+  var mutationTransformer = ref.mutationTransformer; if ( mutationTransformer === void 0 ) mutationTransformer = function (mut) { return mut; };
+  var actionFilter = ref.actionFilter; if ( actionFilter === void 0 ) actionFilter = function (action, state) { return true; };
+  var actionTransformer = ref.actionTransformer; if ( actionTransformer === void 0 ) actionTransformer = function (act) { return act; };
+  var logMutations = ref.logMutations; if ( logMutations === void 0 ) logMutations = true;
+  var logActions = ref.logActions; if ( logActions === void 0 ) logActions = true;
+  var logger = ref.logger; if ( logger === void 0 ) logger = console;
+
+  return function (store) {
+    var prevState = deepCopy(store.state);
+
+    if (typeof logger === 'undefined') {
+      return
+    }
+
+    if (logMutations) {
+      store.subscribe(function (mutation, state) {
+        var nextState = deepCopy(state);
+
+        if (filter(mutation, prevState, nextState)) {
+          var formattedTime = getFormattedTime();
+          var formattedMutation = mutationTransformer(mutation);
+          var message = "mutation " + (mutation.type) + formattedTime;
+
+          startMessage(logger, message, collapsed);
+          logger.log('%c prev state', 'color: #9E9E9E; font-weight: bold', transformer(prevState));
+          logger.log('%c mutation', 'color: #03A9F4; font-weight: bold', formattedMutation);
+          logger.log('%c next state', 'color: #4CAF50; font-weight: bold', transformer(nextState));
+          endMessage(logger);
+        }
+
+        prevState = nextState;
+      });
+    }
+
+    if (logActions) {
+      store.subscribeAction(function (action, state) {
+        if (actionFilter(action, state)) {
+          var formattedTime = getFormattedTime();
+          var formattedAction = actionTransformer(action);
+          var message = "action " + (action.type) + formattedTime;
+
+          startMessage(logger, message, collapsed);
+          logger.log('%c action', 'color: #03A9F4; font-weight: bold', formattedAction);
+          endMessage(logger);
+        }
+      });
+    }
+  }
+}
+
+function startMessage (logger, message, collapsed) {
+  var startMessage = collapsed
+    ? logger.groupCollapsed
+    : logger.group;
+
+  // render
+  try {
+    startMessage.call(logger, message);
+  } catch (e) {
+    logger.log(message);
+  }
+}
+
+function endMessage (logger) {
+  try {
+    logger.groupEnd();
+  } catch (e) {
+    logger.log('—— log end ——');
+  }
+}
+
+function getFormattedTime () {
+  var time = new Date();
+  return (" @ " + (pad(time.getHours(), 2)) + ":" + (pad(time.getMinutes(), 2)) + ":" + (pad(time.getSeconds(), 2)) + "." + (pad(time.getMilliseconds(), 3)))
+}
+
+function repeat (str, times) {
+  return (new Array(times + 1)).join(str)
+}
+
+function pad (num, maxLength) {
+  return repeat('0', maxLength - num.toString().length) + num
+}
+
+var index_cjs = {
+  Store: Store,
+  install: install,
+  version: '3.6.2',
+  mapState: mapState,
+  mapMutations: mapMutations,
+  mapGetters: mapGetters,
+  mapActions: mapActions,
+  createNamespacedHelpers: createNamespacedHelpers,
+  createLogger: createLogger
+};
+
+module.exports = index_cjs;
+
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../../../../webpack/buildin/global.js */ 2)))
+
+/***/ }),
+/* 8 */
+/*!****************************************!*\
+  !*** F:/365/365-vant/store/getters.js ***!
+  \****************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });exports.default = void 0;var getters = {
+  language: function language(state) {return state.common.language;},
+  website: function website(state) {return state.common.website;},
+  userInfo: function userInfo(state) {return state.user.userInfo;},
+  userIdentity: function userIdentity(state) {return state.user.userIdentity;},
+  userChecked: function userChecked(state) {return state.user.userChecked;},
+  sendTimes: function sendTimes(state) {return state.user.sendTimes;} //接收短信的次数
+};var _default =
+
+getters;exports.default = _default;
+
+/***/ }),
+/* 9 */
+/*!********************************************!*\
+  !*** F:/365/365-vant/store/models/user.js ***!
+  \********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(uni) {Object.defineProperty(exports, "__esModule", { value: true });exports.default = void 0;var _validate = __webpack_require__(/*! @/untils/validate.js */ 10);
+
+
+
+var _website = _interopRequireDefault(__webpack_require__(/*! @/config/website */ 11));
+var _user = __webpack_require__(/*! @/api/user */ 12);
+
+
+
+
+var _user2 = __webpack_require__(/*! @/api/user.js */ 12);
+var _jsMd = _interopRequireDefault(__webpack_require__(/*! js-md5 */ 21));
+var _store = __webpack_require__(/*! @/untils/store.js */ 19);
+
+
+
+var _date = __webpack_require__(/*! @/untils/date.js */ 25);
+
+
+
+var _auth = __webpack_require__(/*! @/api/auth.js */ 26);function _interopRequireDefault(obj) {return obj && obj.__esModule ? obj : { default: obj };}
+var refreshTimer = null;
+
+function startRefreshToken(dispatch) {
+  refreshTimer = setInterval(function () {
+    var token =
+    (0, _store.getStore)({
+      name: "token",
+      debug: true }) ||
+    {};
+    var date = (0, _date.calcDate)(token.datetime, new Date().getTime());
+    if ((0, _validate.validatenull)(date)) return;
+    if (date.seconds >= _website.default.tokenTime) {
+      dispatch("refreshToken").
+      then(function () {}).
+      catch(function () {});
+    }
+  }, 10000);
+}
+
+function stopRefreshToken() {
+  clearInterval(refreshTimer);
+}
+
+var user = {
+  state: {
+    tenantId: (0, _store.getStore)({
+      name: 'tenantId' }) ||
+    '',
+    userInfo: (0, _store.getStore)({
+      name: 'userInfo' }) ||
+    [],
+    userIdentity: (0, _store.getStore)({
+      name: 'userIdentity' }) ||
+    '',
+    token: (0, _store.getStore)({
+      name: 'token' }) ||
+    '',
+    refreshToken: (0, _store.getStore)({
+      name: 'refreshToken' }) ||
+    '',
+    userChecked: (0, _store.getStore)({
+      name: 'setUserCheckValue' }) ||
+    false,
+    sendTimes: (0, _store.getStore)({ //用户发送短信次数
+      name: 'setUserSendTimes' }) ||
+    0 },
+
+  actions: {
+    //用户点击radio按钮
+    UserCheckedBtn: function UserCheckedBtn(_ref, val) {var commit = _ref.commit;
+      commit('SET_USER_CHECKED', val);
+    },
+    //根据用户名登录
+    LoginByUsername: function LoginByUsername(_ref2,
+
+
+    userInfo) {var commit = _ref2.commit,dispatch = _ref2.dispatch;
+      return new Promise(function (resolve, reject) {
+        (0, _user2.loginByUsername)(userInfo.tenantId, userInfo.username, (0, _jsMd.default)(userInfo.password), userInfo.type, userInfo.key,
+        userInfo.code).then(function (res) {
+          console.log(res, '手机号密码登录');
+          var data = res.data;
+          if (data.error_description) {
+            uni.showToast({
+              icon: "none",
+              title: data.error_description,
+              duration: 3000 });
+
+          } else {
+            commit('SET_TOKEN', data.access_token);
+            commit('SET_REFRESH_TOKEN', data.refresh_token);
+            commit('SET_TENANT_ID', data.tenant_id);
+            commit('SET_USER_INFO', data);
+            dispatch('refreshAuthState');
+            dispatch('SetIdentity').then(function (res) {
+              var indentityParams = {
+                id: res.data.data.id,
+                nowRole: 4 };
+
+              dispatch('ReSetIdentity', indentityParams);
+            });
+            dispatch('startRefreshNewsTimer');
+            startRefreshToken();
+          }
+          resolve(res);
+        }).catch(function (error) {
+          reject(error);
+        });
+      });
+    },
+    //根据手机号登录
+    LoginByPhone: function LoginByPhone(_ref3,
+
+
+    userInfo) {var commit = _ref3.commit,dispatch = _ref3.dispatch;
+      return new Promise(function (resolve) {
+        (0, _user2.loginByUsername)(userInfo.phone, userInfo.code).then(function (res) {
+          var data = res.data.data;
+          commit('SET_TOKEN', data);
+          dispatch('SetIdentity');
+          resolve();
+        });
+      });
+    },
+    //短信验证码登录
+    LoginByPhoneCode: function LoginByPhoneCode(_ref4,
+
+
+    userInfo) {var commit = _ref4.commit,dispatch = _ref4.dispatch;
+      return new Promise(function (resolve, reject) {
+        (0, _user2.phoneLogin)(userInfo.phone, userInfo.code, userInfo.type).then(function (res) {
+          var data = res.data;
+          if (data.error_description) {
+            uni.showToast({
+              icon: "none",
+              title: data.error_description,
+              duration: 3000 });
+
+            return;
+          }
+          commit('SET_TOKEN', data.access_token);
+          commit('SET_REFRESH_TOKEN', data.refresh_token);
+          commit('SET_USER_INFO', data);
+          dispatch('refreshAuthState');
+          dispatch('SetIdentity');
+          dispatch('startRefreshNewsTimer');
+          startRefreshToken();
+          resolve(res);
+        }).catch(function (err) {
+          reject(err);
+        });
+      });
+    },
+    //微信授权登录
+    LoginByWX: function LoginByWX(_ref5,
+
+
+    userInfo) {var commit = _ref5.commit,dispatch = _ref5.dispatch;
+      return new Promise(function (resolve, reject) {
+        (0, _user2.wxLogin)(userInfo.channelAccountId, userInfo.openId, userInfo.iv, userInfo.encryptedData).then(function (res) {
+          var data = res.data;
+          commit('SET_TOKEN', data.access_token);
+          commit('SET_REFRESH_TOKEN', data.refresh_token);
+          commit('SET_USER_INFO', data);
+          dispatch('refreshAuthState');
+          dispatch('SetIdentity');
+
+          startRefreshToken();
+          resolve(res);
+        }).catch(function (err) {
+          reject(err);
+        });
+      });
+    },
+    SetIdentity: function SetIdentity(_ref6) {var commit = _ref6.commit,dispatch = _ref6.dispatch;
+      return new Promise(function (resolve, reject) {
+        (0, _auth.accountIdentity)().then(function (res) {
+          console.log('当前用户登录身份', res.data.data);
+          // const indentityParams = {
+          // 	id: res.data.data.id,
+          // 	nowRole: 4,
+          // }
+          // this.$store.dispatch('ReSetIdentity', indentityParams)
+          var data = res.data.data;
+          commit('SET_USER_IDENTITY', data);
+          resolve(res);
+        });
+      }).catch(function (err) {
+        reject(err);
+      });
+    },
+    ReSetIdentity: function ReSetIdentity(_ref7, identityParams) {var commit = _ref7.commit,dispatch = _ref7.dispatch;
+      console.log('重置身份dispath', identityParams);
+      return new Promise(function (resolve, reject) {
+        (0, _auth.resetAccountIdentity)(identityParams).then(function (res) {
+          console.log('重置当前用户登录身份', res);
+          dispatch('SetIdentity');
+          resolve();
+        });
+      }).catch(function (err) {
+        reject(err);
+      });
+    },
+    GetUserInfo: function GetUserInfo(_ref8)
+
+    {var commit = _ref8.commit;
+      return new Promise(function (resolve, reject) {
+        (0, _user.getUserInfo)().then(function (res) {
+          var data = res.data.data;
+          resolve(data);
+        }).catch(function (err) {
+          reject(err);
+        });
+      });
+    },
+    //刷新token
+    refreshToken: function refreshToken(_ref9)
+
+
+
+    {var state = _ref9.state,commit = _ref9.commit,dispatch = _ref9.dispatch;
+      return new Promise(function (resolve, reject) {
+        (0, _user.refreshToken)(state.refreshToken, state.tenantId).then(function (res) {
+          var data = res.data;
+          dispatch('refreshAuthState');
+          commit('SET_TOKEN', data.access_token);
+          commit('SET_REFRESH_TOKEN', data.refresh_token);
+          resolve();
+        }).catch(function (error) {
+          reject(error);
+        });
+      });
+    },
+    // 登出
+    LogOut: function LogOut(_ref10)
+
+
+    {var dispatch = _ref10.dispatch,commit = _ref10.commit;
+      return new Promise(function (resolve, reject) {
+        (0, _user.logout)();
+        stopRefreshToken();
+        commit('SET_TOKEN', '');
+        commit('SET_VIPCODE', '0');
+        commit('SET_USER_INFO', '');
+        commit('SET_USER_IDENTITY', {});
+        //dispatch('clearAuthenication')
+        resolve();
+      });
+    },
+    //注销session
+    FedLogOut: function FedLogOut(_ref11)
+
+    {var commit = _ref11.commit;
+      return new Promise(function (resolve) {
+        commit('SET_TOKEN', '');
+        resolve();
+      });
+    },
+    startRefreshTokenTimer: function startRefreshTokenTimer(_ref12)
+
+
+
+    {var state = _ref12.state,commit = _ref12.commit,dispatch = _ref12.dispatch;
+      if (state.token) {
+        dispatch('refreshToken').then(function () {
+          startRefreshToken(dispatch);
+        });
+      }
+    },
+    //更新用户接收短信次数
+    UpdateUserSendTimes: function UpdateUserSendTimes(_ref13,
+
+    data) {var commit = _ref13.commit;
+      commit('SET_USER_SENDTIMES', data);
+    } },
+
+  mutations: {
+    SET_TOKEN: function SET_TOKEN(state, token) {
+      state.token = token;
+      (0, _store.setStore)({
+        name: 'token',
+        content: state.token,
+        type: 'session' });
+
+    },
+    SET_REFRESH_TOKEN: function SET_REFRESH_TOKEN(state, refreshToken) {
+      state.refreshToken = refreshToken;
+      (0, _store.setStore)({
+        name: 'refreshToken',
+        content: state.refreshToken,
+        type: 'session' });
+
+    },
+    SET_TENANT_ID: function SET_TENANT_ID(state, tenantId) {
+      state.tenantId = tenantId;
+      (0, _store.setStore)({
+        name: 'tenantId',
+        content: state.tenantId,
+        type: 'session' });
+
+    },
+    SET_USER_INFO: function SET_USER_INFO(state, userInfo) {
+      state.userInfo = userInfo;
+      (0, _store.setStore)({
+        name: 'userInfo',
+        content: state.userInfo });
+
+    },
+    SET_USER_IDENTITY: function SET_USER_IDENTITY(state, indentity) {
+      state.userIdentity = indentity;
+      (0, _store.setStore)({
+        name: 'userIdentity',
+        content: state.userIdentity });
+
+    },
+    SET_USER_CHECKED: function SET_USER_CHECKED(state, val) {
+      state.userChecked = val;
+      (0, _store.setStore)({
+        name: 'setUserCheckValue',
+        content: state.userChecked });
+
+    },
+    SET_USER_SENDTIMES: function SET_USER_SENDTIMES(state, val) {
+      state.sendTimes = val;
+      (0, _store.setStore)({
+        name: 'setUserSendTimes',
+        content: state.sendTimes });
+
+    } } };var _default =
+
+
+
+user;exports.default = _default;
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 1)["default"]))
+
+/***/ }),
+/* 10 */
+/*!******************************************!*\
+  !*** F:/365/365-vant/untils/validate.js ***!
+  \******************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });exports.isvalidUsername = isvalidUsername;exports.validateURL = validateURL;exports.isEmail = isEmail;exports.isMobile = isMobile;exports.isPhone = isPhone;exports.isURL = isURL;exports.validateLowerCase = validateLowerCase;exports.validateUpperCase = validateUpperCase;exports.validatAlphabets = validatAlphabets;exports.validateEmail = validateEmail;exports.cardid = cardid;exports.isvalidatemobile = isvalidatemobile;exports.validatename = validatename;exports.validatenumber = validatenumber;exports.validatenum = validatenum;exports.validatePositiveInteger = validatePositiveInteger;exports.validatePositiveDecimal = validatePositiveDecimal;exports.validatenumord = validatenumord;exports.validatenull = validatenull;exports.check18IdCardNo = check18IdCardNo;exports.getAgeFromIdCard = getAgeFromIdCard;exports.isExcel = isExcel;exports.password = password;exports.checkPassword = checkPassword;exports.vaildatePc = void 0; /**
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             * Created by jiachenpan on 16/11/18.
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             */
+
+function isvalidUsername(str) {
+  var valid_map = ['admin', 'editor'];
+  return valid_map.indexOf(str.trim()) >= 0;
+}
+
+/* 合法uri*/
+function validateURL(textval) {
+  var urlregex =
+  /^(https?|ftp):\/\/([a-zA-Z0-9.-]+(:[a-zA-Z0-9.&%$-]+)*@)*((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]?)(\.(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])){3}|([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+\.(com|edu|gov|int|mil|net|org|biz|arpa|info|name|pro|aero|coop|museum|[a-zA-Z]{2}))(:[0-9]+)*(\/($|[a-zA-Z0-9.,?'\\+&%$#=~_-]+))*$/;
+  return urlregex.test(textval);
+}
+
+/**
+   * 邮箱
+   * @param {*} s
+   */
+function isEmail(s) {
+  return /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+((.[a-zA-Z0-9_-]{2,3}){1,2})$/.test(s);
+}
+
+/**
+   * 手机号码
+   * @param {*} s
+   */
+function isMobile(s) {
+  return /^1[0-9]{10}$/.test(s);
+}
+
+/**
+   * 电话号码
+   * @param {*} s
+   */
+function isPhone(s) {
+  return /^([0-9]{3,4}-)?[0-9]{7,8}$/.test(s);
+}
+
+/**
+   * URL地址
+   * @param {*} s
+   */
+function isURL(s) {
+  return /^http[s]?:\/\/.*/.test(s);
+}
+
+/* 小写字母*/
+function validateLowerCase(str) {
+  var reg = /^[a-z]+$/;
+  return reg.test(str);
+}
+
+/* 大写字母*/
+function validateUpperCase(str) {
+  var reg = /^[A-Z]+$/;
+  return reg.test(str);
+}
+
+/* 大小写字母*/
+function validatAlphabets(str) {
+  var reg = /^[A-Za-z]+$/;
+  return reg.test(str);
+}
+
+/*验证pad还是pc*/
+var vaildatePc = function vaildatePc() {
+  var userAgentInfo = navigator.userAgent;
+  var Agents = ["Android", "iPhone",
+  "SymbianOS", "Windows Phone",
+  "iPad", "iPod"];
+
+  var flag = true;
+  for (var v = 0; v < Agents.length; v++) {
+    if (userAgentInfo.indexOf(Agents[v]) > 0) {
+      flag = false;
+      break;
+    }
+  }
+  return flag;
+};
+
+/**
+    * validate email
+    * @param email
+    * @returns {boolean}
+    */exports.vaildatePc = vaildatePc;
+function validateEmail(email) {
+  var re =
+  /^(([^<>()\\[\]\\.,;:\s@"]+(\.[^<>()\\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  return re.test(email);
+}
+
+/**
+   * 判断身份证号码
+   */
+function cardid(code) {
+  var list = [];
+  var result = true;
+  var msg = '';
+  var city = {
+    11: "北京",
+    12: "天津",
+    13: "河北",
+    14: "山西",
+    15: "内蒙古",
+    21: "辽宁",
+    22: "吉林",
+    23: "黑龙江 ",
+    31: "上海",
+    32: "江苏",
+    33: "浙江",
+    34: "安徽",
+    35: "福建",
+    36: "江西",
+    37: "山东",
+    41: "河南",
+    42: "湖北 ",
+    43: "湖南",
+    44: "广东",
+    45: "广西",
+    46: "海南",
+    50: "重庆",
+    51: "四川",
+    52: "贵州",
+    53: "云南",
+    54: "西藏 ",
+    61: "陕西",
+    62: "甘肃",
+    63: "青海",
+    64: "宁夏",
+    65: "新疆",
+    71: "台湾",
+    81: "香港",
+    82: "澳门",
+    91: "国外 " };
+
+  if (!validatenull(code)) {
+    if (code.length == 18) {
+      if (!code || !/(^\d{18}$)|(^\d{17}(\d|X|x)$)/.test(code)) {
+        msg = "证件号码格式错误";
+      } else if (!city[code.substr(0, 2)]) {
+        msg = "地址编码错误";
+      } else {
+        //18位身份证需要验证最后一位校验位
+        code = code.split('');
+        //∑(ai×Wi)(mod 11)
+        //加权因子
+        var factor = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
+        //校验位
+        var parity = [1, 0, 'X', 9, 8, 7, 6, 5, 4, 3, 2, 'x'];
+        var sum = 0;
+        var ai = 0;
+        var wi = 0;
+        for (var i = 0; i < 17; i++) {
+          ai = code[i];
+          wi = factor[i];
+          sum += ai * wi;
+        }
+        if (parity[sum % 11] != code[17]) {
+          msg = "证件号码校验位错误";
+        } else {
+          result = false;
+        }
+
+      }
+    } else {
+      msg = "证件号码长度不为18位";
+    }
+
+  } else {
+    msg = "证件号码不能为空";
+  }
+  list.push(result);
+  list.push(msg);
+  return list;
+}
+
+/**
+   * 判断手机号码是否正确
+   */
+function isvalidatemobile(phone) {
+  var list = [];
+  var result = true;
+  var msg = '';
+  var isPhone = new RegExp('^0\d{2,3}-?\d{7,8}$');
+  //增加134 减少|1349[0-9]{7}，增加181,增加145，增加17[678]  
+  if (!validatenull(phone)) {
+    if (phone.length == 11) {
+      if (isPhone.test(phone)) {
+        msg = '手机号码格式不正确';
+      } else {
+        result = false;
+      }
+    } else {
+      msg = '手机号码长度不为11位';
+    }
+  } else {
+    msg = '手机号码不能为空';
+  }
+  list.push(result);
+  list.push(msg);
+  return list;
+}
+
+/**
+   * 判断姓名是否正确
+   */
+function validatename(name) {
+  var regName = /^[\u4e00-\u9fa5]{2,4}$/;
+  if (!regName.test(name)) return false;
+  return true;
+}
+
+/**
+   * 判断是否为整数
+   */
+function validatenumber(num) {
+  return typeof num === 'number';
+}
+
+/**
+   * 判断是否为整数
+   */
+function validatenum(num, type) {
+  var regName = /[^\d.]/g;
+  if (type == 1) {
+    if (!regName.test(num)) return false;
+  } else if (type == 2) {
+    regName = /[^\d]/g;
+    if (!regName.test(num)) return false;
+  }
+  return true;
+}
+
+/**
+   * 判断是否为正整数
+   */
+function validatePositiveInteger(num) {var min = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;var max = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : Infinity;
+  var re = /^[0-9]+$/;
+  return re.test(num) && num >= min && num <= max;
+}
+
+/**
+   * 判断是否为小数
+   */
+function validatePositiveDecimal(num) {var min = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;var max = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : Infinity;
+  var re = /^(([1-9][0-9]*)|(([0]\.\d{1,2}|[1-9][0-9]*\.\d{1,2})))$/;
+  return re.test(num) && num >= min && num <= max;
+}
+
+/**
+   * 判断是否为小数
+   */
+function validatenumord(num, type) {
+  var regName = /[^\d.]/g;
+  if (type == 1) {
+    if (!regName.test(num)) return false;
+  } else if (type == 2) {
+    regName = /[^\d.]/g;
+    if (!regName.test(num)) return false;
+  }
+  return true;
+}
+
+/**
+   * 判断是否为空
+   */
+function validatenull(val) {
+  if (typeof val == 'boolean') {
+    return false;
+  }
+  if (typeof val == 'number') {
+    return false;
+  }
+  if (val instanceof Array) {
+    if (val.length == 0) return true;
+  } else if (val instanceof Object) {
+    if (JSON.stringify(val) === '{}') return true;
+  } else {
+    if (val == 'null' || val == null || val == 'undefined' || val == undefined || val == '')
+    return true;
+    return false;
+  }
+  return false;
+}
+
+/*判断身份证*/
+// 每位加权因子
+var powers = ['7', '9', '10', '5', '8', '4', '2', '1', '6', '3', '7', '9', '10', '5', '8', '4', '2'];
+
+// 第18位校检码
+var parityBit = ['1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2'];
+
+var provinceAndCitys = {
+  11: '北京',
+  12: '天津',
+  13: '河北',
+  14: '山西',
+  15: '内蒙古',
+  21: '辽宁',
+  22: '吉林',
+  23: '黑龙江',
+  31: '上海',
+  32: '江苏',
+  33: '浙江',
+  34: '安徽',
+  35: '福建',
+  36: '江西',
+  37: '山东',
+  41: '河南',
+  42: '湖北',
+  43: '湖南',
+  44: '广东',
+  45: '广西',
+  46: '海南',
+  50: '重庆',
+  51: '四川',
+  52: '贵州',
+  53: '云南',
+  54: '西藏',
+  61: '陕西',
+  62: '甘肃',
+  63: '青海',
+  64: '宁夏',
+  65: '新疆',
+  71: '台湾',
+  81: '香港',
+  82: '澳门',
+  91: '国外' };
+
+
+// 校验18位的身份证号码
+function check18IdCardNo(idCardNo) {
+  // 18位身份证号码的基本格式校验
+  var check = /^[1-9]\d{5}[1-9]\d{3}((0[1-9])|(1[0-2]))((0[1-9])|([1-2][0-9])|(3[0-1]))\d{3}(\d|x|X)$/.test(idCardNo);
+  if (!check) return false;
+  // 校验地址码
+  var addressCode = idCardNo.substring(0, 6);
+  check = checkAddressCode(addressCode);
+  if (!check) return false;
+  // 校验日期码
+  var birDayCode = idCardNo.substring(6, 14);
+  check = checkBirthDayCode(birDayCode);
+  if (!check) return false;
+  // 验证校检码
+  return checkParityBit(idCardNo);
+}
+
+// 根据身份证获取年龄
+function getAgeFromIdCard(idCard) {
+  var age = 0;
+  var birthYear, birthMonth, birthDay;
+  if (idCard) {
+    var reg = /(^\d{15}$)|(^\d{17}(\d|X)$)/;
+    if (reg.test(idCard)) {
+      if (idCard.length == 15) {
+        var birthStr = idCard.substring(6, 12);
+        birthYear = "19" + birthStr.substring(0, 2);
+        birthMonth = birthStr.substring(2, 4);
+        birthDay = birthStr.substring(4, 6);
+      } else if (idCard.length == 18) {
+        birthYear = idCard.substring(6, 10);
+        birthMonth = idCard.substring(10, 12);
+        birthDay = idCard.substring(12, 14);
+      }
+      var nowDate = new Date();
+      var nowYear = nowDate.getFullYear();
+      var nowMonth = nowDate.getMonth() + 1;
+      var nowDay = nowDate.getDate();
+      age = nowYear - birthYear;
+      if (nowMonth < birthMonth || nowMonth == birthMonth && nowDay < birthDay) {
+        age--;
+      }
+    }
+  }
+  return age;
+}
+
+// 校验地址码
+function checkAddressCode(addressCode) {
+  var check = /^[1-9]\d{5}$/.test(addressCode);
+  if (!check) return false;
+  if (provinceAndCitys[parseInt(addressCode.substring(0, 2))]) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+// 校验日期码
+function checkBirthDayCode(birDayCode) {
+  var check = /^[1-9]\d{3}((0[1-9])|(1[0-2]))((0[1-9])|([1-2][0-9])|(3[0-1]))$/.test(birDayCode);
+  if (!check) return false;
+  var yyyy = parseInt(birDayCode.substring(0, 4), 10);
+  var mm = parseInt(birDayCode.substring(4, 6), 10);
+  var dd = parseInt(birDayCode.substring(6), 10);
+  var xdata = new Date(yyyy, mm - 1, dd);
+  if (xdata > new Date()) {
+    return false;
+  } else if (xdata.getFullYear() === yyyy && xdata.getMonth() === mm - 1 && xdata.getDate() === dd) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+// 验证校检码
+function checkParityBit(idCardNo) {
+  var parityBit = idCardNo.charAt(17).toUpperCase();
+  if (getParityBit(idCardNo) === parityBit) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+// 计算校检码
+function getParityBit(idCardNo) {
+  var id17 = idCardNo.substring(0, 17);
+  // 加权
+  var power = 0;
+  for (var i = 0; i < 17; i++) {
+    power += parseInt(id17.charAt(i), 10) * parseInt(powers[i]);
+  }
+  // 取模
+  var mod = power % 11;
+  return parityBit[mod];
+}
+
+// 验证excel文件格式
+function isExcel(file) {
+  var isXlsx =
+  file.type ===
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+  file.type === "application/vnd.ms-excel" ||
+  file.type === "application/x-excel" ||
+  file.name.indexOf("xls") > -1 ||
+  file.name.indexOf("xlsx") > -1;
+
+  return isXlsx;
+}
+
+// 验证密码
+function password(psw) {
+  var reg = new RegExp('^.{6,20}$');
+  return !reg.test(psw);
+}
+/**
+   * 判断密码 包含8-20位字母、数字、特殊符号（/@$!%*#_~?&）全部包含的组合
+   */
+function checkPassword(psw) {
+  var reg = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[/@$!%*#_~?&,.])[a-zA-Z\d/@$!%*#_~?&,.]{8,20}$/;
+  return !reg.test(psw);
+}
+
+/***/ }),
 /* 11 */
+/*!*****************************************!*\
+  !*** F:/365/365-vant/config/website.js ***!
+  \*****************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });exports.default = void 0; /**
+                                                                                                      * 全局配置文件
+                                                                                                      */var _default =
+{
+  title: 'jobslink',
+  logo: 'S',
+  key: 'jobslink', //配置主键,目前用于存储
+  indexTitle: 'Jobslink Admin',
+  clientId: 'jobslink_clientA', // 客户端id
+  clientSecret: 'jobslink_clientA_secret', // 客户端密钥
+  clientcompanyId: 'jobslink_manager', // 客户端id
+  clientcompanySecret: 'jobslink_manager_secret', // 客户端密钥
+  tenantMode: true, // 是否开启租户模式
+  tenantId: '000000', // 管理组租户编号
+  captchaMode: true, // 是否开启验证码模式
+  tokenName: 'Jobslink-Auth',
+  tokenTime: 3000,
+  newsRefreshTime: 600000, // 消息刷新时间
+  //http的status默认放行不才用统一处理的,
+  statusWhiteList: [],
+  source: 'jobslink-flexible-employment',
+  client: 'applet' //H5 , applet
+};exports.default = _default;
+
+/***/ }),
+/* 12 */
+/*!***********************************!*\
+  !*** F:/365/365-vant/api/user.js ***!
+  \***********************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });exports.identitySec = exports.identity = exports.whetherSetPwd = exports.phoneLogin = exports.phoneLogin_GetCode = exports.wxLogin = exports.wxLoginCode = exports.clearCache = exports.sendLogs = exports.getUserInfo = exports.logout = exports.getCaptcha = exports.refreshToken = exports.loginByUsername = void 0;var _AxiosUtils = __webpack_require__(/*! @/untils/AxiosUtils.js */ 13);
+
+
+var _store = __webpack_require__(/*! @/untils/store.js */ 19);
+
+
+var _website = _interopRequireDefault(__webpack_require__(/*! @/config/website */ 11));function _interopRequireDefault(obj) {return obj && obj.__esModule ? obj : { default: obj };}
+
+var loginByUsername = function loginByUsername(tenantId, username, password, type, key, code) {return (0, _AxiosUtils.request)({
+    url: '/api/jobslink-auth/oauth/token',
+    method: 'post',
+    headers: {
+      'Login-Type': 'Type-T',
+      'Captcha-Key': key,
+      'Captcha-Code': code,
+      'Platform-Id': (0, _store.getStore)({
+        name: 'platformId' }) ||
+      '' },
+
+    params: {
+      tenantId: tenantId,
+      username: username,
+      password: password,
+      grant_type: _website.default.captchaMode ? "captcha" : "password",
+      scope: "all",
+      type: type,
+      source: _website.default.source,
+      client: _website.default.client } });};exports.loginByUsername = loginByUsername;
+
+
+
+var refreshToken = function refreshToken(refresh_token, tenantId) {return (0, _AxiosUtils.request)({
+    url: '/api/jobslink-auth/oauth/token',
+    method: 'post',
+    headers: {
+      'Tenant-Id': tenantId,
+      'Login-Type': 'Type-U' },
+
+    params: {
+      tenantId: tenantId,
+      refresh_token: refresh_token,
+      grant_type: "refresh_token",
+      scope: "all",
+      source: _website.default.source,
+      client: _website.default.client } });};exports.refreshToken = refreshToken;
+
+
+
+var getCaptcha = function getCaptcha() {return (0, _AxiosUtils.request)({
+    url: '/api/jobslink-auth/oauth/captcha',
+    method: 'get' });};exports.getCaptcha = getCaptcha;
+
+
+var logout = function logout() {return (0, _AxiosUtils.request)({
+    url: '/api/jobslink-auth/oauth/logout',
+    method: 'get' });};exports.logout = logout;
+
+
+var getUserInfo = function getUserInfo() {return (0, _AxiosUtils.request)({
+    url: '/api/jobslink-auth/oauth/user-info',
+    method: 'get' });};exports.getUserInfo = getUserInfo;
+
+
+var sendLogs = function sendLogs(list) {return (0, _AxiosUtils.request)({
+    url: '/api/jobslink-auth/oauth/logout',
+    method: 'post',
+    data: list });};exports.sendLogs = sendLogs;
+
+
+var clearCache = function clearCache() {return (0, _AxiosUtils.request)({
+    url: '/api/jobslink-auth/oauth/clear-cache',
+    method: 'get' });};exports.clearCache = clearCache;
+
+var wxLoginCode = function wxLoginCode(code, channelAccountId) {return (0, _AxiosUtils.request)({
+    url: '/api/jobslink-user/front/account/wx-auth',
+    method: 'get',
+    params: {
+      code: code,
+      channelAccountId: channelAccountId } });};exports.wxLoginCode = wxLoginCode;
+
+
+var wxLogin = function wxLogin(channelAccountId, openId, iv, encryptedData) {return (
+    (0, _AxiosUtils.request)({
+      url: '/api/jobslink-auth/oauth/token',
+      headers: {
+        'Login-Type': 'Type-U' },
+
+      method: 'post',
+      params: {
+        channelAccountId: channelAccountId,
+        openId: openId,
+        iv: iv,
+        encryptedData: encryptedData,
+        grant_type: 'wechat_phone',
+        source: _website.default.source,
+        client: _website.default.client } }));};exports.wxLogin = wxLogin;
+
+
+var phoneLogin_GetCode = function phoneLogin_GetCode(mobile, type) {return (0, _AxiosUtils.request)({
+    url: '/api/jobslink-user/front/account/smsValidateCode',
+    method: 'get',
+    params: {
+      mobile: mobile,
+      type: type } });};exports.phoneLogin_GetCode = phoneLogin_GetCode;
+
+
+var phoneLogin = function phoneLogin(mobile, smsCode, type) {return (0, _AxiosUtils.request)({
+    url: '/api/jobslink-auth/oauth/token',
+    method: 'post',
+    headers: {
+      'Login-Type': 'Type-U',
+
+      'Platform-Id': (0, _store.getStore)({
+        name: 'platformId' }) ||
+      '' },
+
+    params: {
+      mobile: mobile,
+      smsCode: smsCode,
+      grant_type: 'sms_code',
+      scope: "all",
+      type: type,
+      source: _website.default.source,
+      client: _website.default.client } });};exports.phoneLogin = phoneLogin;
+
+
+var whetherSetPwd = function whetherSetPwd(mobile) {return (0, _AxiosUtils.request)({
+    url: '/api/jobslink-user/account/isValidPassword',
+    method: 'get',
+    params: {
+      mobile: mobile } });};exports.whetherSetPwd = whetherSetPwd;
+
+
+
+var identity = function identity(mobile) {return (0, _AxiosUtils.request)({
+    url: '/api/jobslink-auth/oauth/token',
+    method: 'post',
+    headers: {
+      'Login-Type': 'Type-T',
+      'Platform-Id': (0, _store.getStore)({
+        name: 'platformId' }) ||
+      '' },
+
+    params: {
+      grant_type: 'switch_role',
+      scope: 'all',
+      type: 'account' } });};exports.identity = identity;
+
+
+var identitySec = function identitySec(mobile) {return (0, _AxiosUtils.request)({
+    url: '/api/jobslink-auth/oauth/token',
+    method: 'post',
+    headers: {
+      'Login-Type': 'Type-U',
+      'Platform-Id': (0, _store.getStore)({
+        name: 'platformId' }) ||
+      '' },
+
+    params: {
+      grant_type: 'switch_role',
+      scope: 'all',
+      type: 'account' } });};exports.identitySec = identitySec;
+
+/***/ }),
+/* 13 */
+/*!********************************************!*\
+  !*** F:/365/365-vant/untils/AxiosUtils.js ***!
+  \********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(uni) {Object.defineProperty(exports, "__esModule", { value: true });exports.DoGet = DoGet;exports.DoPost = DoPost;exports.request = request;exports.DateFormat = DateFormat;exports.HtmlImgAddHost = HtmlImgAddHost;exports.Promisify = Promisify;exports.GoLogin = GoLogin;exports.GetServiceIata = GetServiceIata;exports.confirm = confirm;var _regenerator = _interopRequireDefault(__webpack_require__(/*! ./node_modules/@babel/runtime/regenerator */ 14));var _Constants = __webpack_require__(/*! ./Constants */ 17);
+
+
+
+var _website = _interopRequireDefault(__webpack_require__(/*! ../config/website.js */ 11));
+var _jsBase = __webpack_require__(/*! js-base64 */ 18);
+
+
+var _store = _interopRequireDefault(__webpack_require__(/*! @/store/ */ 6));
+var _store2 = __webpack_require__(/*! @/untils/store.js */ 19);
+var _env = __webpack_require__(/*! @/config/env.js */ 20);function _interopRequireDefault(obj) {return obj && obj.__esModule ? obj : { default: obj };}function ownKeys(object, enumerableOnly) {var keys = Object.keys(object);if (Object.getOwnPropertySymbols) {var symbols = Object.getOwnPropertySymbols(object);if (enumerableOnly) symbols = symbols.filter(function (sym) {return Object.getOwnPropertyDescriptor(object, sym).enumerable;});keys.push.apply(keys, symbols);}return keys;}function _objectSpread(target) {for (var i = 1; i < arguments.length; i++) {var source = arguments[i] != null ? arguments[i] : {};if (i % 2) {ownKeys(Object(source), true).forEach(function (key) {_defineProperty(target, key, source[key]);});} else if (Object.getOwnPropertyDescriptors) {Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));} else {ownKeys(Object(source)).forEach(function (key) {Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));});}}return target;}function _defineProperty(obj, key, value) {if (key in obj) {Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true });} else {obj[key] = value;}return obj;}function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) {try {var info = gen[key](arg);var value = info.value;} catch (error) {reject(error);return;}if (info.done) {resolve(value);} else {Promise.resolve(value).then(_next, _throw);}}function _asyncToGenerator(fn) {return function () {var self = this,args = arguments;return new Promise(function (resolve, reject) {var gen = fn.apply(self, args);function _next(value) {asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value);}function _throw(err) {asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err);}_next(undefined);});};}
+
+
+
+var showModal = true;
+/**
+                       *
+                       * @export
+                       * @param {string} url
+                       * @param {*} [data={}]
+                       * @param {*} [config={}]
+                       * @returns {Promise<any>}
+                       */
+function DoGet(url) {var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};var config = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+  return DoAjax({
+    url: url,
+    data: data,
+    method: "GET",
+    dataType: "json" },
+
+  config);
+
+}
+
+/**
+   *
+   * @export
+   * @param {string} url
+   * @param {*} [data={}]
+   * @param {*} [config={}]
+   * @returns {Promise<any>}
+   */
+function DoPost(url) {var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};var config = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+  return DoAjax({
+    url: url,
+    data: data,
+    method: "POST",
+    dataType: "json" },
+
+  config);
+
+}
+
+function request(options) {
+  var params = options.params;
+  if (params) {
+    var query = '';
+    for (var key in params) {
+      if (params[key] !== undefined && params[key] !== null) {
+        query += "&".concat(key, "=").concat(params[key]);
+      }
+    }
+    query = '?' + query.substring(1);
+    options.url += query;
+  }
+  return DoAjax(options);
+}function
+
+DoAjax(_x) {return _DoAjax.apply(this, arguments);}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+                                                     * 时间格式化
+                                                     * @param {*} str
+                                                     * @param {string} fmt
+                                                     */function _DoAjax() {_DoAjax = _asyncToGenerator( /*#__PURE__*/_regenerator.default.mark(function _callee(options) {var config,func,header,loginType,loginTypesec,token,res,status,statusWhiteList,message,_args = arguments;return _regenerator.default.wrap(function _callee$(_context) {while (1) {switch (_context.prev = _context.next) {case 0:config = _args.length > 1 && _args[1] !== undefined ? _args[1] : {};func = Promisify(uni.request);header = options.headers || {};header["Authorization"] = "Basic ".concat(_jsBase.Base64.encode("".concat(_website.default.clientId, ":").concat(_website.default.clientSecret)));loginType = _store.default.state.user.userInfo.login_type;if (loginType) {loginTypesec = (0, _store2.getStore)({ name: 'userInfo' }); // // 个人
+              if (loginTypesec.login_type == 'Type-U') {header["Authorization"] = "Basic ".concat(_jsBase.Base64.encode("".concat(_website.default.clientId, ":").concat(_website.default.clientSecret)));} // 企业
+              else if (loginTypesec.login_type == 'Type-T') {header["Authorization"] = "Basic ".concat(_jsBase.Base64.encode("".concat(_website.default.clientcompanyId, ":").concat(_website.default.clientcompanySecret)));}} // let loginToken =  getStore({
+            // 	name:'userInfo',
+            // })
+            token = _store.default.state.user.token;if (token) {header[_website.default.tokenName] = "bearer " + token;} // if (loginToken.access_token) {
+            // 	header[website.tokenName] = "bearer " + loginToken.access_token
+            // }
+            if (_env.baseUrl) {options.url = _env.baseUrl + options.url;}options = Object.assign({}, options, { header: header });res = null;_context.prev = 11;_context.next = 14;return func(options);case 14:res = _context.sent;_context.next = 22;break;case 17:_context.prev = 17;_context.t0 = _context["catch"](11);console.log('AxiosUitls', { err: _context.t0 });res = _context.t0;res.data = {};case 22:_context.prev = 22;return _context.finish(22);case 24: // 获取状态码
+            status = res.data.code || res.statusCode;statusWhiteList = _website.default.statusWhiteList || [];message = res.data.msg || res.data.error_description || '未知错误'; //如果在白名单里则自行catch逻辑处理
+            if (!statusWhiteList.includes(status)) {_context.next = 29;break;}throw res;case 29:if (!(status === 401)) {_context.next = 32;break;}_store.default.dispatch('FedLogOut').then(function () {GoLogin();});throw new Error(message);case 32:if (!(status !== 200)) {_context.next = 38;break;}if (message === 'Bad credentials') {message = '账号或密码错误';}if (status === 500) {// message = '请求失败'
+              message = '网络有延迟，请刷新重试';}if (status === 503) {// message = '请求失败'
+              message = '网络有延迟，请刷新重试';}setTimeout(function () {uni.showToast({ title: message, icon: 'none', duration: 3000 });});throw new Error(message);case 38:return _context.abrupt("return", res);case 39:case "end":return _context.stop();}}}, _callee, null, [[11, 17, 22, 24]]);}));return _DoAjax.apply(this, arguments);}function DateFormat(str) {var fmt = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "YYYY-MM-DD HH:mm:ss";return str ? moment(str).format(fmt) : "--";} /**
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   * 富文本添加域名
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   * @export
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   * @param {string} html
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   * @returns
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   */function HtmlImgAddHost(html) {return html.replace(/ src="\//g, " style=\"width:100% !important\" src=\"".concat(_Constants.BASE_URL, "/"));}
+function Promisify(func) {
+  return function (data) {
+    return new Promise(function (resolve, reject) {
+      func(_objectSpread(_objectSpread({},
+      data), {}, {
+        success: resolve,
+        fail: reject }));
+
+    });
+  };
+}
+
+function GoLogin() {
+  if (showModal) {
+    showModal = false;
+    // uni.showModal({
+    // 	title: "提示",
+    // 	content: "您还未登录，点击确认去登录",
+    // 	success({
+    // 		confirm
+    // 	}) {
+    // 		if (confirm) {
+    // 			uni.redirectTo({
+    // 				url: "/loginPackage/login/login"
+    // 			});
+    // 		}
+    // 		showModal = true
+    // 	},
+    // 	fail() {
+    // 		showModal = true
+    // 	}
+    // })
+  }
+}
+
+/**
+   * 获取服务机场
+   * @export
+   * @param {string[]} list
+   */
+function GetServiceIata() {
+  var dic = new Set(_Constants.AIRPORTS);for (var _len = arguments.length, list = new Array(_len), _key = 0; _key < _len; _key++) {list[_key] = arguments[_key];}
+
+  for (var i = 0; i < list.length; i++) {
+    if (dic.has(list[i])) return list[i];
+  }
+
+  return _Constants.AIRPORTS[0];
+}function
+
+confirm(_x2) {return _confirm.apply(this, arguments);}function _confirm() {_confirm = _asyncToGenerator( /*#__PURE__*/_regenerator.default.mark(function _callee2(options) {var func, res;return _regenerator.default.wrap(function _callee2$(_context2) {while (1) {switch (_context2.prev = _context2.next) {case 0:
+            func = Promisify(wx.showModal);_context2.next = 3;return (
+              func(options));case 3:res = _context2.sent;if (!(
+            res.confirm !== true)) {_context2.next = 6;break;}throw new Error(res.cancel);case 6:case "end":return _context2.stop();}}}, _callee2);}));return _confirm.apply(this, arguments);}
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 1)["default"]))
+
+/***/ }),
+/* 14 */
+/*!**********************************************************!*\
+  !*** ./node_modules/@babel/runtime/regenerator/index.js ***!
+  \**********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(/*! regenerator-runtime */ 15);
+
+/***/ }),
+/* 15 */
+/*!************************************************************!*\
+  !*** ./node_modules/regenerator-runtime/runtime-module.js ***!
+  \************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * Copyright (c) 2014-present, Facebook, Inc.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+// This method of obtaining a reference to the global object needs to be
+// kept identical to the way it is obtained in runtime.js
+var g = (function() {
+  return this || (typeof self === "object" && self);
+})() || Function("return this")();
+
+// Use `getOwnPropertyNames` because not all browsers support calling
+// `hasOwnProperty` on the global `self` object in a worker. See #183.
+var hadRuntime = g.regeneratorRuntime &&
+  Object.getOwnPropertyNames(g).indexOf("regeneratorRuntime") >= 0;
+
+// Save the old regeneratorRuntime in case it needs to be restored later.
+var oldRuntime = hadRuntime && g.regeneratorRuntime;
+
+// Force reevalutation of runtime.js.
+g.regeneratorRuntime = undefined;
+
+module.exports = __webpack_require__(/*! ./runtime */ 16);
+
+if (hadRuntime) {
+  // Restore the original runtime.
+  g.regeneratorRuntime = oldRuntime;
+} else {
+  // Remove the global property added by runtime.js.
+  try {
+    delete g.regeneratorRuntime;
+  } catch(e) {
+    g.regeneratorRuntime = undefined;
+  }
+}
+
+
+/***/ }),
+/* 16 */
+/*!*****************************************************!*\
+  !*** ./node_modules/regenerator-runtime/runtime.js ***!
+  \*****************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/**
+ * Copyright (c) 2014-present, Facebook, Inc.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+!(function(global) {
+  "use strict";
+
+  var Op = Object.prototype;
+  var hasOwn = Op.hasOwnProperty;
+  var undefined; // More compressible than void 0.
+  var $Symbol = typeof Symbol === "function" ? Symbol : {};
+  var iteratorSymbol = $Symbol.iterator || "@@iterator";
+  var asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator";
+  var toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag";
+
+  var inModule = typeof module === "object";
+  var runtime = global.regeneratorRuntime;
+  if (runtime) {
+    if (inModule) {
+      // If regeneratorRuntime is defined globally and we're in a module,
+      // make the exports object identical to regeneratorRuntime.
+      module.exports = runtime;
+    }
+    // Don't bother evaluating the rest of this file if the runtime was
+    // already defined globally.
+    return;
+  }
+
+  // Define the runtime globally (as expected by generated code) as either
+  // module.exports (if we're in a module) or a new, empty object.
+  runtime = global.regeneratorRuntime = inModule ? module.exports : {};
+
+  function wrap(innerFn, outerFn, self, tryLocsList) {
+    // If outerFn provided and outerFn.prototype is a Generator, then outerFn.prototype instanceof Generator.
+    var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator;
+    var generator = Object.create(protoGenerator.prototype);
+    var context = new Context(tryLocsList || []);
+
+    // The ._invoke method unifies the implementations of the .next,
+    // .throw, and .return methods.
+    generator._invoke = makeInvokeMethod(innerFn, self, context);
+
+    return generator;
+  }
+  runtime.wrap = wrap;
+
+  // Try/catch helper to minimize deoptimizations. Returns a completion
+  // record like context.tryEntries[i].completion. This interface could
+  // have been (and was previously) designed to take a closure to be
+  // invoked without arguments, but in all the cases we care about we
+  // already have an existing method we want to call, so there's no need
+  // to create a new function object. We can even get away with assuming
+  // the method takes exactly one argument, since that happens to be true
+  // in every case, so we don't have to touch the arguments object. The
+  // only additional allocation required is the completion record, which
+  // has a stable shape and so hopefully should be cheap to allocate.
+  function tryCatch(fn, obj, arg) {
+    try {
+      return { type: "normal", arg: fn.call(obj, arg) };
+    } catch (err) {
+      return { type: "throw", arg: err };
+    }
+  }
+
+  var GenStateSuspendedStart = "suspendedStart";
+  var GenStateSuspendedYield = "suspendedYield";
+  var GenStateExecuting = "executing";
+  var GenStateCompleted = "completed";
+
+  // Returning this object from the innerFn has the same effect as
+  // breaking out of the dispatch switch statement.
+  var ContinueSentinel = {};
+
+  // Dummy constructor functions that we use as the .constructor and
+  // .constructor.prototype properties for functions that return Generator
+  // objects. For full spec compliance, you may wish to configure your
+  // minifier not to mangle the names of these two functions.
+  function Generator() {}
+  function GeneratorFunction() {}
+  function GeneratorFunctionPrototype() {}
+
+  // This is a polyfill for %IteratorPrototype% for environments that
+  // don't natively support it.
+  var IteratorPrototype = {};
+  IteratorPrototype[iteratorSymbol] = function () {
+    return this;
+  };
+
+  var getProto = Object.getPrototypeOf;
+  var NativeIteratorPrototype = getProto && getProto(getProto(values([])));
+  if (NativeIteratorPrototype &&
+      NativeIteratorPrototype !== Op &&
+      hasOwn.call(NativeIteratorPrototype, iteratorSymbol)) {
+    // This environment has a native %IteratorPrototype%; use it instead
+    // of the polyfill.
+    IteratorPrototype = NativeIteratorPrototype;
+  }
+
+  var Gp = GeneratorFunctionPrototype.prototype =
+    Generator.prototype = Object.create(IteratorPrototype);
+  GeneratorFunction.prototype = Gp.constructor = GeneratorFunctionPrototype;
+  GeneratorFunctionPrototype.constructor = GeneratorFunction;
+  GeneratorFunctionPrototype[toStringTagSymbol] =
+    GeneratorFunction.displayName = "GeneratorFunction";
+
+  // Helper for defining the .next, .throw, and .return methods of the
+  // Iterator interface in terms of a single ._invoke method.
+  function defineIteratorMethods(prototype) {
+    ["next", "throw", "return"].forEach(function(method) {
+      prototype[method] = function(arg) {
+        return this._invoke(method, arg);
+      };
+    });
+  }
+
+  runtime.isGeneratorFunction = function(genFun) {
+    var ctor = typeof genFun === "function" && genFun.constructor;
+    return ctor
+      ? ctor === GeneratorFunction ||
+        // For the native GeneratorFunction constructor, the best we can
+        // do is to check its .name property.
+        (ctor.displayName || ctor.name) === "GeneratorFunction"
+      : false;
+  };
+
+  runtime.mark = function(genFun) {
+    if (Object.setPrototypeOf) {
+      Object.setPrototypeOf(genFun, GeneratorFunctionPrototype);
+    } else {
+      genFun.__proto__ = GeneratorFunctionPrototype;
+      if (!(toStringTagSymbol in genFun)) {
+        genFun[toStringTagSymbol] = "GeneratorFunction";
+      }
+    }
+    genFun.prototype = Object.create(Gp);
+    return genFun;
+  };
+
+  // Within the body of any async function, `await x` is transformed to
+  // `yield regeneratorRuntime.awrap(x)`, so that the runtime can test
+  // `hasOwn.call(value, "__await")` to determine if the yielded value is
+  // meant to be awaited.
+  runtime.awrap = function(arg) {
+    return { __await: arg };
+  };
+
+  function AsyncIterator(generator) {
+    function invoke(method, arg, resolve, reject) {
+      var record = tryCatch(generator[method], generator, arg);
+      if (record.type === "throw") {
+        reject(record.arg);
+      } else {
+        var result = record.arg;
+        var value = result.value;
+        if (value &&
+            typeof value === "object" &&
+            hasOwn.call(value, "__await")) {
+          return Promise.resolve(value.__await).then(function(value) {
+            invoke("next", value, resolve, reject);
+          }, function(err) {
+            invoke("throw", err, resolve, reject);
+          });
+        }
+
+        return Promise.resolve(value).then(function(unwrapped) {
+          // When a yielded Promise is resolved, its final value becomes
+          // the .value of the Promise<{value,done}> result for the
+          // current iteration.
+          result.value = unwrapped;
+          resolve(result);
+        }, function(error) {
+          // If a rejected Promise was yielded, throw the rejection back
+          // into the async generator function so it can be handled there.
+          return invoke("throw", error, resolve, reject);
+        });
+      }
+    }
+
+    var previousPromise;
+
+    function enqueue(method, arg) {
+      function callInvokeWithMethodAndArg() {
+        return new Promise(function(resolve, reject) {
+          invoke(method, arg, resolve, reject);
+        });
+      }
+
+      return previousPromise =
+        // If enqueue has been called before, then we want to wait until
+        // all previous Promises have been resolved before calling invoke,
+        // so that results are always delivered in the correct order. If
+        // enqueue has not been called before, then it is important to
+        // call invoke immediately, without waiting on a callback to fire,
+        // so that the async generator function has the opportunity to do
+        // any necessary setup in a predictable way. This predictability
+        // is why the Promise constructor synchronously invokes its
+        // executor callback, and why async functions synchronously
+        // execute code before the first await. Since we implement simple
+        // async functions in terms of async generators, it is especially
+        // important to get this right, even though it requires care.
+        previousPromise ? previousPromise.then(
+          callInvokeWithMethodAndArg,
+          // Avoid propagating failures to Promises returned by later
+          // invocations of the iterator.
+          callInvokeWithMethodAndArg
+        ) : callInvokeWithMethodAndArg();
+    }
+
+    // Define the unified helper method that is used to implement .next,
+    // .throw, and .return (see defineIteratorMethods).
+    this._invoke = enqueue;
+  }
+
+  defineIteratorMethods(AsyncIterator.prototype);
+  AsyncIterator.prototype[asyncIteratorSymbol] = function () {
+    return this;
+  };
+  runtime.AsyncIterator = AsyncIterator;
+
+  // Note that simple async functions are implemented on top of
+  // AsyncIterator objects; they just return a Promise for the value of
+  // the final result produced by the iterator.
+  runtime.async = function(innerFn, outerFn, self, tryLocsList) {
+    var iter = new AsyncIterator(
+      wrap(innerFn, outerFn, self, tryLocsList)
+    );
+
+    return runtime.isGeneratorFunction(outerFn)
+      ? iter // If outerFn is a generator, return the full iterator.
+      : iter.next().then(function(result) {
+          return result.done ? result.value : iter.next();
+        });
+  };
+
+  function makeInvokeMethod(innerFn, self, context) {
+    var state = GenStateSuspendedStart;
+
+    return function invoke(method, arg) {
+      if (state === GenStateExecuting) {
+        throw new Error("Generator is already running");
+      }
+
+      if (state === GenStateCompleted) {
+        if (method === "throw") {
+          throw arg;
+        }
+
+        // Be forgiving, per 25.3.3.3.3 of the spec:
+        // https://people.mozilla.org/~jorendorff/es6-draft.html#sec-generatorresume
+        return doneResult();
+      }
+
+      context.method = method;
+      context.arg = arg;
+
+      while (true) {
+        var delegate = context.delegate;
+        if (delegate) {
+          var delegateResult = maybeInvokeDelegate(delegate, context);
+          if (delegateResult) {
+            if (delegateResult === ContinueSentinel) continue;
+            return delegateResult;
+          }
+        }
+
+        if (context.method === "next") {
+          // Setting context._sent for legacy support of Babel's
+          // function.sent implementation.
+          context.sent = context._sent = context.arg;
+
+        } else if (context.method === "throw") {
+          if (state === GenStateSuspendedStart) {
+            state = GenStateCompleted;
+            throw context.arg;
+          }
+
+          context.dispatchException(context.arg);
+
+        } else if (context.method === "return") {
+          context.abrupt("return", context.arg);
+        }
+
+        state = GenStateExecuting;
+
+        var record = tryCatch(innerFn, self, context);
+        if (record.type === "normal") {
+          // If an exception is thrown from innerFn, we leave state ===
+          // GenStateExecuting and loop back for another invocation.
+          state = context.done
+            ? GenStateCompleted
+            : GenStateSuspendedYield;
+
+          if (record.arg === ContinueSentinel) {
+            continue;
+          }
+
+          return {
+            value: record.arg,
+            done: context.done
+          };
+
+        } else if (record.type === "throw") {
+          state = GenStateCompleted;
+          // Dispatch the exception by looping back around to the
+          // context.dispatchException(context.arg) call above.
+          context.method = "throw";
+          context.arg = record.arg;
+        }
+      }
+    };
+  }
+
+  // Call delegate.iterator[context.method](context.arg) and handle the
+  // result, either by returning a { value, done } result from the
+  // delegate iterator, or by modifying context.method and context.arg,
+  // setting context.delegate to null, and returning the ContinueSentinel.
+  function maybeInvokeDelegate(delegate, context) {
+    var method = delegate.iterator[context.method];
+    if (method === undefined) {
+      // A .throw or .return when the delegate iterator has no .throw
+      // method always terminates the yield* loop.
+      context.delegate = null;
+
+      if (context.method === "throw") {
+        if (delegate.iterator.return) {
+          // If the delegate iterator has a return method, give it a
+          // chance to clean up.
+          context.method = "return";
+          context.arg = undefined;
+          maybeInvokeDelegate(delegate, context);
+
+          if (context.method === "throw") {
+            // If maybeInvokeDelegate(context) changed context.method from
+            // "return" to "throw", let that override the TypeError below.
+            return ContinueSentinel;
+          }
+        }
+
+        context.method = "throw";
+        context.arg = new TypeError(
+          "The iterator does not provide a 'throw' method");
+      }
+
+      return ContinueSentinel;
+    }
+
+    var record = tryCatch(method, delegate.iterator, context.arg);
+
+    if (record.type === "throw") {
+      context.method = "throw";
+      context.arg = record.arg;
+      context.delegate = null;
+      return ContinueSentinel;
+    }
+
+    var info = record.arg;
+
+    if (! info) {
+      context.method = "throw";
+      context.arg = new TypeError("iterator result is not an object");
+      context.delegate = null;
+      return ContinueSentinel;
+    }
+
+    if (info.done) {
+      // Assign the result of the finished delegate to the temporary
+      // variable specified by delegate.resultName (see delegateYield).
+      context[delegate.resultName] = info.value;
+
+      // Resume execution at the desired location (see delegateYield).
+      context.next = delegate.nextLoc;
+
+      // If context.method was "throw" but the delegate handled the
+      // exception, let the outer generator proceed normally. If
+      // context.method was "next", forget context.arg since it has been
+      // "consumed" by the delegate iterator. If context.method was
+      // "return", allow the original .return call to continue in the
+      // outer generator.
+      if (context.method !== "return") {
+        context.method = "next";
+        context.arg = undefined;
+      }
+
+    } else {
+      // Re-yield the result returned by the delegate method.
+      return info;
+    }
+
+    // The delegate iterator is finished, so forget it and continue with
+    // the outer generator.
+    context.delegate = null;
+    return ContinueSentinel;
+  }
+
+  // Define Generator.prototype.{next,throw,return} in terms of the
+  // unified ._invoke helper method.
+  defineIteratorMethods(Gp);
+
+  Gp[toStringTagSymbol] = "Generator";
+
+  // A Generator should always return itself as the iterator object when the
+  // @@iterator function is called on it. Some browsers' implementations of the
+  // iterator prototype chain incorrectly implement this, causing the Generator
+  // object to not be returned from this call. This ensures that doesn't happen.
+  // See https://github.com/facebook/regenerator/issues/274 for more details.
+  Gp[iteratorSymbol] = function() {
+    return this;
+  };
+
+  Gp.toString = function() {
+    return "[object Generator]";
+  };
+
+  function pushTryEntry(locs) {
+    var entry = { tryLoc: locs[0] };
+
+    if (1 in locs) {
+      entry.catchLoc = locs[1];
+    }
+
+    if (2 in locs) {
+      entry.finallyLoc = locs[2];
+      entry.afterLoc = locs[3];
+    }
+
+    this.tryEntries.push(entry);
+  }
+
+  function resetTryEntry(entry) {
+    var record = entry.completion || {};
+    record.type = "normal";
+    delete record.arg;
+    entry.completion = record;
+  }
+
+  function Context(tryLocsList) {
+    // The root entry object (effectively a try statement without a catch
+    // or a finally block) gives us a place to store values thrown from
+    // locations where there is no enclosing try statement.
+    this.tryEntries = [{ tryLoc: "root" }];
+    tryLocsList.forEach(pushTryEntry, this);
+    this.reset(true);
+  }
+
+  runtime.keys = function(object) {
+    var keys = [];
+    for (var key in object) {
+      keys.push(key);
+    }
+    keys.reverse();
+
+    // Rather than returning an object with a next method, we keep
+    // things simple and return the next function itself.
+    return function next() {
+      while (keys.length) {
+        var key = keys.pop();
+        if (key in object) {
+          next.value = key;
+          next.done = false;
+          return next;
+        }
+      }
+
+      // To avoid creating an additional object, we just hang the .value
+      // and .done properties off the next function object itself. This
+      // also ensures that the minifier will not anonymize the function.
+      next.done = true;
+      return next;
+    };
+  };
+
+  function values(iterable) {
+    if (iterable) {
+      var iteratorMethod = iterable[iteratorSymbol];
+      if (iteratorMethod) {
+        return iteratorMethod.call(iterable);
+      }
+
+      if (typeof iterable.next === "function") {
+        return iterable;
+      }
+
+      if (!isNaN(iterable.length)) {
+        var i = -1, next = function next() {
+          while (++i < iterable.length) {
+            if (hasOwn.call(iterable, i)) {
+              next.value = iterable[i];
+              next.done = false;
+              return next;
+            }
+          }
+
+          next.value = undefined;
+          next.done = true;
+
+          return next;
+        };
+
+        return next.next = next;
+      }
+    }
+
+    // Return an iterator with no values.
+    return { next: doneResult };
+  }
+  runtime.values = values;
+
+  function doneResult() {
+    return { value: undefined, done: true };
+  }
+
+  Context.prototype = {
+    constructor: Context,
+
+    reset: function(skipTempReset) {
+      this.prev = 0;
+      this.next = 0;
+      // Resetting context._sent for legacy support of Babel's
+      // function.sent implementation.
+      this.sent = this._sent = undefined;
+      this.done = false;
+      this.delegate = null;
+
+      this.method = "next";
+      this.arg = undefined;
+
+      this.tryEntries.forEach(resetTryEntry);
+
+      if (!skipTempReset) {
+        for (var name in this) {
+          // Not sure about the optimal order of these conditions:
+          if (name.charAt(0) === "t" &&
+              hasOwn.call(this, name) &&
+              !isNaN(+name.slice(1))) {
+            this[name] = undefined;
+          }
+        }
+      }
+    },
+
+    stop: function() {
+      this.done = true;
+
+      var rootEntry = this.tryEntries[0];
+      var rootRecord = rootEntry.completion;
+      if (rootRecord.type === "throw") {
+        throw rootRecord.arg;
+      }
+
+      return this.rval;
+    },
+
+    dispatchException: function(exception) {
+      if (this.done) {
+        throw exception;
+      }
+
+      var context = this;
+      function handle(loc, caught) {
+        record.type = "throw";
+        record.arg = exception;
+        context.next = loc;
+
+        if (caught) {
+          // If the dispatched exception was caught by a catch block,
+          // then let that catch block handle the exception normally.
+          context.method = "next";
+          context.arg = undefined;
+        }
+
+        return !! caught;
+      }
+
+      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
+        var entry = this.tryEntries[i];
+        var record = entry.completion;
+
+        if (entry.tryLoc === "root") {
+          // Exception thrown outside of any try block that could handle
+          // it, so set the completion value of the entire function to
+          // throw the exception.
+          return handle("end");
+        }
+
+        if (entry.tryLoc <= this.prev) {
+          var hasCatch = hasOwn.call(entry, "catchLoc");
+          var hasFinally = hasOwn.call(entry, "finallyLoc");
+
+          if (hasCatch && hasFinally) {
+            if (this.prev < entry.catchLoc) {
+              return handle(entry.catchLoc, true);
+            } else if (this.prev < entry.finallyLoc) {
+              return handle(entry.finallyLoc);
+            }
+
+          } else if (hasCatch) {
+            if (this.prev < entry.catchLoc) {
+              return handle(entry.catchLoc, true);
+            }
+
+          } else if (hasFinally) {
+            if (this.prev < entry.finallyLoc) {
+              return handle(entry.finallyLoc);
+            }
+
+          } else {
+            throw new Error("try statement without catch or finally");
+          }
+        }
+      }
+    },
+
+    abrupt: function(type, arg) {
+      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
+        var entry = this.tryEntries[i];
+        if (entry.tryLoc <= this.prev &&
+            hasOwn.call(entry, "finallyLoc") &&
+            this.prev < entry.finallyLoc) {
+          var finallyEntry = entry;
+          break;
+        }
+      }
+
+      if (finallyEntry &&
+          (type === "break" ||
+           type === "continue") &&
+          finallyEntry.tryLoc <= arg &&
+          arg <= finallyEntry.finallyLoc) {
+        // Ignore the finally entry if control is not jumping to a
+        // location outside the try/catch block.
+        finallyEntry = null;
+      }
+
+      var record = finallyEntry ? finallyEntry.completion : {};
+      record.type = type;
+      record.arg = arg;
+
+      if (finallyEntry) {
+        this.method = "next";
+        this.next = finallyEntry.finallyLoc;
+        return ContinueSentinel;
+      }
+
+      return this.complete(record);
+    },
+
+    complete: function(record, afterLoc) {
+      if (record.type === "throw") {
+        throw record.arg;
+      }
+
+      if (record.type === "break" ||
+          record.type === "continue") {
+        this.next = record.arg;
+      } else if (record.type === "return") {
+        this.rval = this.arg = record.arg;
+        this.method = "return";
+        this.next = "end";
+      } else if (record.type === "normal" && afterLoc) {
+        this.next = afterLoc;
+      }
+
+      return ContinueSentinel;
+    },
+
+    finish: function(finallyLoc) {
+      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
+        var entry = this.tryEntries[i];
+        if (entry.finallyLoc === finallyLoc) {
+          this.complete(entry.completion, entry.afterLoc);
+          resetTryEntry(entry);
+          return ContinueSentinel;
+        }
+      }
+    },
+
+    "catch": function(tryLoc) {
+      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
+        var entry = this.tryEntries[i];
+        if (entry.tryLoc === tryLoc) {
+          var record = entry.completion;
+          if (record.type === "throw") {
+            var thrown = record.arg;
+            resetTryEntry(entry);
+          }
+          return thrown;
+        }
+      }
+
+      // The context.catch method must only be called with a location
+      // argument that corresponds to a known catch block.
+      throw new Error("illegal catch attempt");
+    },
+
+    delegateYield: function(iterable, resultName, nextLoc) {
+      this.delegate = {
+        iterator: values(iterable),
+        resultName: resultName,
+        nextLoc: nextLoc
+      };
+
+      if (this.method === "next") {
+        // Deliberately forget the last sent value so that we don't
+        // accidentally pass it on to the delegate.
+        this.arg = undefined;
+      }
+
+      return ContinueSentinel;
+    }
+  };
+})(
+  // In sloppy mode, unbound `this` refers to the global object, fallback to
+  // Function constructor if we're in global strict mode. That is sadly a form
+  // of indirect eval which violates Content Security Policy.
+  (function() {
+    return this || (typeof self === "object" && self);
+  })() || Function("return this")()
+);
+
+
+/***/ }),
+/* 17 */
+/*!*******************************************!*\
+  !*** F:/365/365-vant/untils/Constants.js ***!
+  \*******************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });exports.ROLE = exports.BASE_URL = void 0;var BASE_URL = "https://weixin";
+
+// 身份标识
+exports.BASE_URL = BASE_URL;var ROLE = {
+  // 无身份
+  none: 1,
+  // 灵工
+  worker: 2,
+  // 个人招工
+  recruiter_person: 3,
+  // 企业招工
+  recruiter_company: 4 };exports.ROLE = ROLE;
+
+/***/ }),
+/* 18 */
+/*!********************************************************!*\
+  !*** F:/365/365-vant/node_modules/js-base64/base64.js ***!
+  \********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*
+ *  base64.js
+ *
+ *  Licensed under the BSD 3-Clause License.
+ *    http://opensource.org/licenses/BSD-3-Clause
+ *
+ *  References:
+ *    http://en.wikipedia.org/wiki/Base64
+ */
+;(function (global, factory) {
+   true ?
+  module.exports = factory(global) :
+  undefined;
+})(
+typeof self !== 'undefined' ? self :
+typeof window !== 'undefined' ? window :
+typeof global !== 'undefined' ? global :
+this,
+function (global) {
+  'use strict';
+  // existing version for noConflict()
+  global = global || {};
+  var _Base64 = global.Base64;
+  var version = "2.6.4";
+  // constants
+  var b64chars =
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  var b64tab = function (bin) {
+    var t = {};
+    for (var i = 0, l = bin.length; i < l; i++) {t[bin.charAt(i)] = i;}
+    return t;
+  }(b64chars);
+  var fromCharCode = String.fromCharCode;
+  // encoder stuff
+  var cb_utob = function cb_utob(c) {
+    if (c.length < 2) {
+      var cc = c.charCodeAt(0);
+      return cc < 0x80 ? c :
+      cc < 0x800 ? fromCharCode(0xc0 | cc >>> 6) +
+      fromCharCode(0x80 | cc & 0x3f) :
+      fromCharCode(0xe0 | cc >>> 12 & 0x0f) +
+      fromCharCode(0x80 | cc >>> 6 & 0x3f) +
+      fromCharCode(0x80 | cc & 0x3f);
+    } else {
+      var cc = 0x10000 +
+      (c.charCodeAt(0) - 0xD800) * 0x400 + (
+      c.charCodeAt(1) - 0xDC00);
+      return fromCharCode(0xf0 | cc >>> 18 & 0x07) +
+      fromCharCode(0x80 | cc >>> 12 & 0x3f) +
+      fromCharCode(0x80 | cc >>> 6 & 0x3f) +
+      fromCharCode(0x80 | cc & 0x3f);
+    }
+  };
+  var re_utob = /[\uD800-\uDBFF][\uDC00-\uDFFFF]|[^\x00-\x7F]/g;
+  var utob = function utob(u) {
+    return u.replace(re_utob, cb_utob);
+  };
+  var cb_encode = function cb_encode(ccc) {
+    var padlen = [0, 2, 1][ccc.length % 3],
+    ord = ccc.charCodeAt(0) << 16 |
+    (ccc.length > 1 ? ccc.charCodeAt(1) : 0) << 8 | (
+    ccc.length > 2 ? ccc.charCodeAt(2) : 0),
+    chars = [
+    b64chars.charAt(ord >>> 18),
+    b64chars.charAt(ord >>> 12 & 63),
+    padlen >= 2 ? '=' : b64chars.charAt(ord >>> 6 & 63),
+    padlen >= 1 ? '=' : b64chars.charAt(ord & 63)];
+
+    return chars.join('');
+  };
+  var btoa = global.btoa && typeof global.btoa == 'function' ?
+  function (b) {return global.btoa(b);} : function (b) {
+    if (b.match(/[^\x00-\xFF]/)) throw new RangeError(
+    'The string contains invalid characters.');
+
+    return b.replace(/[\s\S]{1,3}/g, cb_encode);
+  };
+  var _encode = function _encode(u) {
+    return btoa(utob(String(u)));
+  };
+  var mkUriSafe = function mkUriSafe(b64) {
+    return b64.replace(/[+\/]/g, function (m0) {
+      return m0 == '+' ? '-' : '_';
+    }).replace(/=/g, '');
+  };
+  var encode = function encode(u, urisafe) {
+    return urisafe ? mkUriSafe(_encode(u)) : _encode(u);
+  };
+  var encodeURI = function encodeURI(u) {return encode(u, true);};
+  var fromUint8Array;
+  if (global.Uint8Array) fromUint8Array = function fromUint8Array(a, urisafe) {
+    // return btoa(fromCharCode.apply(null, a));
+    var b64 = '';
+    for (var i = 0, l = a.length; i < l; i += 3) {
+      var a0 = a[i],a1 = a[i + 1],a2 = a[i + 2];
+      var ord = a0 << 16 | a1 << 8 | a2;
+      b64 += b64chars.charAt(ord >>> 18) +
+      b64chars.charAt(ord >>> 12 & 63) + (
+      typeof a1 != 'undefined' ?
+      b64chars.charAt(ord >>> 6 & 63) : '=') + (
+      typeof a2 != 'undefined' ?
+      b64chars.charAt(ord & 63) : '=');
+    }
+    return urisafe ? mkUriSafe(b64) : b64;
+  };
+  // decoder stuff
+  var re_btou = /[\xC0-\xDF][\x80-\xBF]|[\xE0-\xEF][\x80-\xBF]{2}|[\xF0-\xF7][\x80-\xBF]{3}/g;
+  var cb_btou = function cb_btou(cccc) {
+    switch (cccc.length) {
+      case 4:
+        var cp = (0x07 & cccc.charCodeAt(0)) << 18 |
+        (0x3f & cccc.charCodeAt(1)) << 12 |
+        (0x3f & cccc.charCodeAt(2)) << 6 |
+        0x3f & cccc.charCodeAt(3),
+        offset = cp - 0x10000;
+        return fromCharCode((offset >>> 10) + 0xD800) +
+        fromCharCode((offset & 0x3FF) + 0xDC00);
+      case 3:
+        return fromCharCode(
+        (0x0f & cccc.charCodeAt(0)) << 12 |
+        (0x3f & cccc.charCodeAt(1)) << 6 |
+        0x3f & cccc.charCodeAt(2));
+
+      default:
+        return fromCharCode(
+        (0x1f & cccc.charCodeAt(0)) << 6 |
+        0x3f & cccc.charCodeAt(1));}
+
+
+  };
+  var btou = function btou(b) {
+    return b.replace(re_btou, cb_btou);
+  };
+  var cb_decode = function cb_decode(cccc) {
+    var len = cccc.length,
+    padlen = len % 4,
+    n = (len > 0 ? b64tab[cccc.charAt(0)] << 18 : 0) | (
+    len > 1 ? b64tab[cccc.charAt(1)] << 12 : 0) | (
+    len > 2 ? b64tab[cccc.charAt(2)] << 6 : 0) | (
+    len > 3 ? b64tab[cccc.charAt(3)] : 0),
+    chars = [
+    fromCharCode(n >>> 16),
+    fromCharCode(n >>> 8 & 0xff),
+    fromCharCode(n & 0xff)];
+
+    chars.length -= [0, 0, 2, 1][padlen];
+    return chars.join('');
+  };
+  var _atob = global.atob && typeof global.atob == 'function' ?
+  function (a) {return global.atob(a);} : function (a) {
+    return a.replace(/\S{1,4}/g, cb_decode);
+  };
+  var atob = function atob(a) {
+    return _atob(String(a).replace(/[^A-Za-z0-9\+\/]/g, ''));
+  };
+  var _decode = function _decode(a) {return btou(_atob(a));};
+  var _fromURI = function _fromURI(a) {
+    return String(a).replace(/[-_]/g, function (m0) {
+      return m0 == '-' ? '+' : '/';
+    }).replace(/[^A-Za-z0-9\+\/]/g, '');
+  };
+  var decode = function decode(a) {
+    return _decode(_fromURI(a));
+  };
+  var toUint8Array;
+  if (global.Uint8Array) toUint8Array = function toUint8Array(a) {
+    return Uint8Array.from(atob(_fromURI(a)), function (c) {
+      return c.charCodeAt(0);
+    });
+  };
+  var noConflict = function noConflict() {
+    var Base64 = global.Base64;
+    global.Base64 = _Base64;
+    return Base64;
+  };
+  // export Base64
+  global.Base64 = {
+    VERSION: version,
+    atob: atob,
+    btoa: btoa,
+    fromBase64: decode,
+    toBase64: encode,
+    utob: utob,
+    encode: encode,
+    encodeURI: encodeURI,
+    btou: btou,
+    decode: decode,
+    noConflict: noConflict,
+    fromUint8Array: fromUint8Array,
+    toUint8Array: toUint8Array };
+
+  // if ES5 is available, make Base64.extendString() available
+  if (typeof Object.defineProperty === 'function') {
+    var noEnum = function noEnum(v) {
+      return { value: v, enumerable: false, writable: true, configurable: true };
+    };
+    global.Base64.extendString = function () {
+      Object.defineProperty(
+      String.prototype, 'fromBase64', noEnum(function () {
+        return decode(this);
+      }));
+      Object.defineProperty(
+      String.prototype, 'toBase64', noEnum(function (urisafe) {
+        return encode(this, urisafe);
+      }));
+      Object.defineProperty(
+      String.prototype, 'toBase64URI', noEnum(function () {
+        return encode(this, true);
+      }));
+    };
+  }
+  //
+  // export Base64 to the namespace
+  //
+  if (global['Meteor']) {// Meteor.js
+    Base64 = global.Base64;
+  }
+  // module.exports and AMD are mutually exclusive.
+  // module.exports has precedence.
+  if ( true && module.exports) {
+    module.exports.Base64 = global.Base64;
+  } else
+  if (true) {
+    // AMD. Register as an anonymous module.
+    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = (function () {return global.Base64;}).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+  }
+  // that's it!
+  return { Base64: global.Base64 };
+});
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! (webpack)/buildin/global.js */ 2)))
+
+/***/ }),
+/* 19 */
+/*!***************************************!*\
+  !*** F:/365/365-vant/untils/store.js ***!
+  \***************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(uni) {Object.defineProperty(exports, "__esModule", { value: true });exports.setStore = exports.getStore = void 0;var _website = _interopRequireDefault(__webpack_require__(/*! @/config/website */ 11));function _interopRequireDefault(obj) {return obj && obj.__esModule ? obj : { default: obj };}
+
+var keyName = _website.default.key + '-';
+
+var getStore = function getStore() {var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};var
+
+  name =
+
+  params.name,debug = params.debug;
+  name = keyName + name;
+  var obj = uni.getStorageSync(name);
+
+  if (debug) {
+    return obj;
+  }
+  return obj.content;
+};exports.getStore = getStore;
+
+var setStore = function setStore() {var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};var
+
+  name =
+
+
+  params.name,content = params.content,type = params.type;
+  name = keyName + name;
+  var obj = {
+    dataType: typeof content,
+    content: content,
+    type: type,
+    datetime: new Date().getTime() };
+
+  return uni.setStorageSync(name, obj);
+};exports.setStore = setStore;
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 1)["default"]))
+
+/***/ }),
+/* 20 */
+/*!*************************************!*\
+  !*** F:/365/365-vant/config/env.js ***!
+  \*************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });exports.channelAccountId = exports.pdfBaseUrl = exports.staticImgUrl = exports.imgUrl = exports.baseUrl = void 0; /* ---------------------------------------------- */
+// 微信小程序API正式环境：
+// staticImgUrl正式环境:
+/* ---------------------------------------------- */
+
+// 小程序 channelAccountId
+var channelAccountId = 1;
+// 图片资源1
+exports.channelAccountId = channelAccountId;var imgUrl = "https://wxapi.jlhrms.cn";
+// 微信小程序API域名
+exports.imgUrl = imgUrl;var baseUrl = '';
+// H5域名，预览PDF页
+exports.baseUrl = baseUrl;var pdfBaseUrl = '';
+// 图片资源2
+// https://jlfiles-test.oss-cn-zhangjiakou.aliyuncs.com/jyy-wx
+// https://wxapi.jlhrms.cn/api/jyy-wx
+exports.pdfBaseUrl = pdfBaseUrl;var staticImgUrl = "";exports.staticImgUrl = staticImgUrl;
+
+var env = Object({"VUE_APP_NAME":"365-vant","VUE_APP_PLATFORM":"mp-weixin","NODE_ENV":"development","BASE_URL":"/"});
+
+if (env.NODE_ENV == 'development') {// HBuilderX运行版
+  if (env.VUE_APP_PLATFORM === 'mp-weixin') {
+    exports.baseUrl = baseUrl = "http://192.168.22.204";
+    exports.pdfBaseUrl = pdfBaseUrl = "http://192.168.22.204:1897";
+    exports.staticImgUrl = staticImgUrl = "https://jlfiles-test.oss-cn-zhangjiakou.aliyuncs.com/jyy-wx";
+
+    /* baseUrl = "https://jyywxapi.jobslink.cn";
+                                                                                                         pdfBaseUrl = "https://pdf.jobslink.cn";
+                                                                                                         staticImgUrl = 'https://jyyfiles.oss-cn-zhangjiakou.aliyuncs.com/jyy-wx'; */
+  }
+} else if (env.NODE_ENV == 'production') {// HBuilderX发行版
+  if (env.VUE_APP_PLATFORM === 'mp-weixin') {
+    exports.baseUrl = baseUrl = "https://jyywxapi.jobslink.cn";
+    exports.pdfBaseUrl = pdfBaseUrl = "https://pdf.jobslink.cn";
+    exports.staticImgUrl = staticImgUrl = 'https://jyyfiles.oss-cn-zhangjiakou.aliyuncs.com/jyy-wx';
+
+    // baseUrl = "http://192.168.22.204";
+    // pdfBaseUrl = "http://192.168.22.204:1897";
+    // staticImgUrl = "https://jlfiles-test.oss-cn-zhangjiakou.aliyuncs.com/jyy-wx";
+  }
+}
+
+console.log('=== baseUrl ===', baseUrl);
+
+/***/ }),
+/* 21 */
+/*!******************************************************!*\
+  !*** F:/365/365-vant/node_modules/js-md5/src/md5.js ***!
+  \******************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(process, global) {var __WEBPACK_AMD_DEFINE_RESULT__;/**
+ * [js-md5]{@link https://github.com/emn178/js-md5}
+ *
+ * @namespace md5
+ * @version 0.7.3
+ * @author Chen, Yi-Cyuan [emn178@gmail.com]
+ * @copyright Chen, Yi-Cyuan 2014-2017
+ * @license MIT
+ */
+(function () {
+  'use strict';
+
+  var ERROR = 'input is invalid type';
+  var WINDOW = typeof window === 'object';
+  var root = WINDOW ? window : {};
+  if (root.JS_MD5_NO_WINDOW) {
+    WINDOW = false;
+  }
+  var WEB_WORKER = !WINDOW && typeof self === 'object';
+  var NODE_JS = !root.JS_MD5_NO_NODE_JS && typeof process === 'object' && process.versions && process.versions.node;
+  if (NODE_JS) {
+    root = global;
+  } else if (WEB_WORKER) {
+    root = self;
+  }
+  var COMMON_JS = !root.JS_MD5_NO_COMMON_JS && typeof module === 'object' && module.exports;
+  var AMD =  true && __webpack_require__(/*! !webpack amd options */ 24);
+  var ARRAY_BUFFER = !root.JS_MD5_NO_ARRAY_BUFFER && typeof ArrayBuffer !== 'undefined';
+  var HEX_CHARS = '0123456789abcdef'.split('');
+  var EXTRA = [128, 32768, 8388608, -2147483648];
+  var SHIFT = [0, 8, 16, 24];
+  var OUTPUT_TYPES = ['hex', 'array', 'digest', 'buffer', 'arrayBuffer', 'base64'];
+  var BASE64_ENCODE_CHAR = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'.split('');
+
+  var blocks = [],buffer8;
+  if (ARRAY_BUFFER) {
+    var buffer = new ArrayBuffer(68);
+    buffer8 = new Uint8Array(buffer);
+    blocks = new Uint32Array(buffer);
+  }
+
+  if (root.JS_MD5_NO_NODE_JS || !Array.isArray) {
+    Array.isArray = function (obj) {
+      return Object.prototype.toString.call(obj) === '[object Array]';
+    };
+  }
+
+  if (ARRAY_BUFFER && (root.JS_MD5_NO_ARRAY_BUFFER_IS_VIEW || !ArrayBuffer.isView)) {
+    ArrayBuffer.isView = function (obj) {
+      return typeof obj === 'object' && obj.buffer && obj.buffer.constructor === ArrayBuffer;
+    };
+  }
+
+  /**
+     * @method hex
+     * @memberof md5
+     * @description Output hash as hex string
+     * @param {String|Array|Uint8Array|ArrayBuffer} message message to hash
+     * @returns {String} Hex string
+     * @example
+     * md5.hex('The quick brown fox jumps over the lazy dog');
+     * // equal to
+     * md5('The quick brown fox jumps over the lazy dog');
+     */
+  /**
+         * @method digest
+         * @memberof md5
+         * @description Output hash as bytes array
+         * @param {String|Array|Uint8Array|ArrayBuffer} message message to hash
+         * @returns {Array} Bytes array
+         * @example
+         * md5.digest('The quick brown fox jumps over the lazy dog');
+         */
+  /**
+             * @method array
+             * @memberof md5
+             * @description Output hash as bytes array
+             * @param {String|Array|Uint8Array|ArrayBuffer} message message to hash
+             * @returns {Array} Bytes array
+             * @example
+             * md5.array('The quick brown fox jumps over the lazy dog');
+             */
+  /**
+                 * @method arrayBuffer
+                 * @memberof md5
+                 * @description Output hash as ArrayBuffer
+                 * @param {String|Array|Uint8Array|ArrayBuffer} message message to hash
+                 * @returns {ArrayBuffer} ArrayBuffer
+                 * @example
+                 * md5.arrayBuffer('The quick brown fox jumps over the lazy dog');
+                 */
+  /**
+                     * @method buffer
+                     * @deprecated This maybe confuse with Buffer in node.js. Please use arrayBuffer instead.
+                     * @memberof md5
+                     * @description Output hash as ArrayBuffer
+                     * @param {String|Array|Uint8Array|ArrayBuffer} message message to hash
+                     * @returns {ArrayBuffer} ArrayBuffer
+                     * @example
+                     * md5.buffer('The quick brown fox jumps over the lazy dog');
+                     */
+  /**
+                         * @method base64
+                         * @memberof md5
+                         * @description Output hash as base64 string
+                         * @param {String|Array|Uint8Array|ArrayBuffer} message message to hash
+                         * @returns {String} base64 string
+                         * @example
+                         * md5.base64('The quick brown fox jumps over the lazy dog');
+                         */
+  var createOutputMethod = function createOutputMethod(outputType) {
+    return function (message) {
+      return new Md5(true).update(message)[outputType]();
+    };
+  };
+
+  /**
+      * @method create
+      * @memberof md5
+      * @description Create Md5 object
+      * @returns {Md5} Md5 object.
+      * @example
+      * var hash = md5.create();
+      */
+  /**
+          * @method update
+          * @memberof md5
+          * @description Create and update Md5 object
+          * @param {String|Array|Uint8Array|ArrayBuffer} message message to hash
+          * @returns {Md5} Md5 object.
+          * @example
+          * var hash = md5.update('The quick brown fox jumps over the lazy dog');
+          * // equal to
+          * var hash = md5.create();
+          * hash.update('The quick brown fox jumps over the lazy dog');
+          */
+  var createMethod = function createMethod() {
+    var method = createOutputMethod('hex');
+    if (NODE_JS) {
+      method = nodeWrap(method);
+    }
+    method.create = function () {
+      return new Md5();
+    };
+    method.update = function (message) {
+      return method.create().update(message);
+    };
+    for (var i = 0; i < OUTPUT_TYPES.length; ++i) {
+      var type = OUTPUT_TYPES[i];
+      method[type] = createOutputMethod(type);
+    }
+    return method;
+  };
+
+  var nodeWrap = function nodeWrap(method) {
+    var crypto = eval("require('crypto')");
+    var Buffer = eval("require('buffer').Buffer");
+    var nodeMethod = function nodeMethod(message) {
+      if (typeof message === 'string') {
+        return crypto.createHash('md5').update(message, 'utf8').digest('hex');
+      } else {
+        if (message === null || message === undefined) {
+          throw ERROR;
+        } else if (message.constructor === ArrayBuffer) {
+          message = new Uint8Array(message);
+        }
+      }
+      if (Array.isArray(message) || ArrayBuffer.isView(message) ||
+      message.constructor === Buffer) {
+        return crypto.createHash('md5').update(new Buffer(message)).digest('hex');
+      } else {
+        return method(message);
+      }
+    };
+    return nodeMethod;
+  };
+
+  /**
+      * Md5 class
+      * @class Md5
+      * @description This is internal class.
+      * @see {@link md5.create}
+      */
+  function Md5(sharedMemory) {
+    if (sharedMemory) {
+      blocks[0] = blocks[16] = blocks[1] = blocks[2] = blocks[3] =
+      blocks[4] = blocks[5] = blocks[6] = blocks[7] =
+      blocks[8] = blocks[9] = blocks[10] = blocks[11] =
+      blocks[12] = blocks[13] = blocks[14] = blocks[15] = 0;
+      this.blocks = blocks;
+      this.buffer8 = buffer8;
+    } else {
+      if (ARRAY_BUFFER) {
+        var buffer = new ArrayBuffer(68);
+        this.buffer8 = new Uint8Array(buffer);
+        this.blocks = new Uint32Array(buffer);
+      } else {
+        this.blocks = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+      }
+    }
+    this.h0 = this.h1 = this.h2 = this.h3 = this.start = this.bytes = this.hBytes = 0;
+    this.finalized = this.hashed = false;
+    this.first = true;
+  }
+
+  /**
+     * @method update
+     * @memberof Md5
+     * @instance
+     * @description Update hash
+     * @param {String|Array|Uint8Array|ArrayBuffer} message message to hash
+     * @returns {Md5} Md5 object.
+     * @see {@link md5.update}
+     */
+  Md5.prototype.update = function (message) {
+    if (this.finalized) {
+      return;
+    }
+
+    var notString,type = typeof message;
+    if (type !== 'string') {
+      if (type === 'object') {
+        if (message === null) {
+          throw ERROR;
+        } else if (ARRAY_BUFFER && message.constructor === ArrayBuffer) {
+          message = new Uint8Array(message);
+        } else if (!Array.isArray(message)) {
+          if (!ARRAY_BUFFER || !ArrayBuffer.isView(message)) {
+            throw ERROR;
+          }
+        }
+      } else {
+        throw ERROR;
+      }
+      notString = true;
+    }
+    var code,index = 0,i,length = message.length,blocks = this.blocks;
+    var buffer8 = this.buffer8;
+
+    while (index < length) {
+      if (this.hashed) {
+        this.hashed = false;
+        blocks[0] = blocks[16];
+        blocks[16] = blocks[1] = blocks[2] = blocks[3] =
+        blocks[4] = blocks[5] = blocks[6] = blocks[7] =
+        blocks[8] = blocks[9] = blocks[10] = blocks[11] =
+        blocks[12] = blocks[13] = blocks[14] = blocks[15] = 0;
+      }
+
+      if (notString) {
+        if (ARRAY_BUFFER) {
+          for (i = this.start; index < length && i < 64; ++index) {
+            buffer8[i++] = message[index];
+          }
+        } else {
+          for (i = this.start; index < length && i < 64; ++index) {
+            blocks[i >> 2] |= message[index] << SHIFT[i++ & 3];
+          }
+        }
+      } else {
+        if (ARRAY_BUFFER) {
+          for (i = this.start; index < length && i < 64; ++index) {
+            code = message.charCodeAt(index);
+            if (code < 0x80) {
+              buffer8[i++] = code;
+            } else if (code < 0x800) {
+              buffer8[i++] = 0xc0 | code >> 6;
+              buffer8[i++] = 0x80 | code & 0x3f;
+            } else if (code < 0xd800 || code >= 0xe000) {
+              buffer8[i++] = 0xe0 | code >> 12;
+              buffer8[i++] = 0x80 | code >> 6 & 0x3f;
+              buffer8[i++] = 0x80 | code & 0x3f;
+            } else {
+              code = 0x10000 + ((code & 0x3ff) << 10 | message.charCodeAt(++index) & 0x3ff);
+              buffer8[i++] = 0xf0 | code >> 18;
+              buffer8[i++] = 0x80 | code >> 12 & 0x3f;
+              buffer8[i++] = 0x80 | code >> 6 & 0x3f;
+              buffer8[i++] = 0x80 | code & 0x3f;
+            }
+          }
+        } else {
+          for (i = this.start; index < length && i < 64; ++index) {
+            code = message.charCodeAt(index);
+            if (code < 0x80) {
+              blocks[i >> 2] |= code << SHIFT[i++ & 3];
+            } else if (code < 0x800) {
+              blocks[i >> 2] |= (0xc0 | code >> 6) << SHIFT[i++ & 3];
+              blocks[i >> 2] |= (0x80 | code & 0x3f) << SHIFT[i++ & 3];
+            } else if (code < 0xd800 || code >= 0xe000) {
+              blocks[i >> 2] |= (0xe0 | code >> 12) << SHIFT[i++ & 3];
+              blocks[i >> 2] |= (0x80 | code >> 6 & 0x3f) << SHIFT[i++ & 3];
+              blocks[i >> 2] |= (0x80 | code & 0x3f) << SHIFT[i++ & 3];
+            } else {
+              code = 0x10000 + ((code & 0x3ff) << 10 | message.charCodeAt(++index) & 0x3ff);
+              blocks[i >> 2] |= (0xf0 | code >> 18) << SHIFT[i++ & 3];
+              blocks[i >> 2] |= (0x80 | code >> 12 & 0x3f) << SHIFT[i++ & 3];
+              blocks[i >> 2] |= (0x80 | code >> 6 & 0x3f) << SHIFT[i++ & 3];
+              blocks[i >> 2] |= (0x80 | code & 0x3f) << SHIFT[i++ & 3];
+            }
+          }
+        }
+      }
+      this.lastByteIndex = i;
+      this.bytes += i - this.start;
+      if (i >= 64) {
+        this.start = i - 64;
+        this.hash();
+        this.hashed = true;
+      } else {
+        this.start = i;
+      }
+    }
+    if (this.bytes > 4294967295) {
+      this.hBytes += this.bytes / 4294967296 << 0;
+      this.bytes = this.bytes % 4294967296;
+    }
+    return this;
+  };
+
+  Md5.prototype.finalize = function () {
+    if (this.finalized) {
+      return;
+    }
+    this.finalized = true;
+    var blocks = this.blocks,i = this.lastByteIndex;
+    blocks[i >> 2] |= EXTRA[i & 3];
+    if (i >= 56) {
+      if (!this.hashed) {
+        this.hash();
+      }
+      blocks[0] = blocks[16];
+      blocks[16] = blocks[1] = blocks[2] = blocks[3] =
+      blocks[4] = blocks[5] = blocks[6] = blocks[7] =
+      blocks[8] = blocks[9] = blocks[10] = blocks[11] =
+      blocks[12] = blocks[13] = blocks[14] = blocks[15] = 0;
+    }
+    blocks[14] = this.bytes << 3;
+    blocks[15] = this.hBytes << 3 | this.bytes >>> 29;
+    this.hash();
+  };
+
+  Md5.prototype.hash = function () {
+    var a,b,c,d,bc,da,blocks = this.blocks;
+
+    if (this.first) {
+      a = blocks[0] - 680876937;
+      a = (a << 7 | a >>> 25) - 271733879 << 0;
+      d = (-1732584194 ^ a & 2004318071) + blocks[1] - 117830708;
+      d = (d << 12 | d >>> 20) + a << 0;
+      c = (-271733879 ^ d & (a ^ -271733879)) + blocks[2] - 1126478375;
+      c = (c << 17 | c >>> 15) + d << 0;
+      b = (a ^ c & (d ^ a)) + blocks[3] - 1316259209;
+      b = (b << 22 | b >>> 10) + c << 0;
+    } else {
+      a = this.h0;
+      b = this.h1;
+      c = this.h2;
+      d = this.h3;
+      a += (d ^ b & (c ^ d)) + blocks[0] - 680876936;
+      a = (a << 7 | a >>> 25) + b << 0;
+      d += (c ^ a & (b ^ c)) + blocks[1] - 389564586;
+      d = (d << 12 | d >>> 20) + a << 0;
+      c += (b ^ d & (a ^ b)) + blocks[2] + 606105819;
+      c = (c << 17 | c >>> 15) + d << 0;
+      b += (a ^ c & (d ^ a)) + blocks[3] - 1044525330;
+      b = (b << 22 | b >>> 10) + c << 0;
+    }
+
+    a += (d ^ b & (c ^ d)) + blocks[4] - 176418897;
+    a = (a << 7 | a >>> 25) + b << 0;
+    d += (c ^ a & (b ^ c)) + blocks[5] + 1200080426;
+    d = (d << 12 | d >>> 20) + a << 0;
+    c += (b ^ d & (a ^ b)) + blocks[6] - 1473231341;
+    c = (c << 17 | c >>> 15) + d << 0;
+    b += (a ^ c & (d ^ a)) + blocks[7] - 45705983;
+    b = (b << 22 | b >>> 10) + c << 0;
+    a += (d ^ b & (c ^ d)) + blocks[8] + 1770035416;
+    a = (a << 7 | a >>> 25) + b << 0;
+    d += (c ^ a & (b ^ c)) + blocks[9] - 1958414417;
+    d = (d << 12 | d >>> 20) + a << 0;
+    c += (b ^ d & (a ^ b)) + blocks[10] - 42063;
+    c = (c << 17 | c >>> 15) + d << 0;
+    b += (a ^ c & (d ^ a)) + blocks[11] - 1990404162;
+    b = (b << 22 | b >>> 10) + c << 0;
+    a += (d ^ b & (c ^ d)) + blocks[12] + 1804603682;
+    a = (a << 7 | a >>> 25) + b << 0;
+    d += (c ^ a & (b ^ c)) + blocks[13] - 40341101;
+    d = (d << 12 | d >>> 20) + a << 0;
+    c += (b ^ d & (a ^ b)) + blocks[14] - 1502002290;
+    c = (c << 17 | c >>> 15) + d << 0;
+    b += (a ^ c & (d ^ a)) + blocks[15] + 1236535329;
+    b = (b << 22 | b >>> 10) + c << 0;
+    a += (c ^ d & (b ^ c)) + blocks[1] - 165796510;
+    a = (a << 5 | a >>> 27) + b << 0;
+    d += (b ^ c & (a ^ b)) + blocks[6] - 1069501632;
+    d = (d << 9 | d >>> 23) + a << 0;
+    c += (a ^ b & (d ^ a)) + blocks[11] + 643717713;
+    c = (c << 14 | c >>> 18) + d << 0;
+    b += (d ^ a & (c ^ d)) + blocks[0] - 373897302;
+    b = (b << 20 | b >>> 12) + c << 0;
+    a += (c ^ d & (b ^ c)) + blocks[5] - 701558691;
+    a = (a << 5 | a >>> 27) + b << 0;
+    d += (b ^ c & (a ^ b)) + blocks[10] + 38016083;
+    d = (d << 9 | d >>> 23) + a << 0;
+    c += (a ^ b & (d ^ a)) + blocks[15] - 660478335;
+    c = (c << 14 | c >>> 18) + d << 0;
+    b += (d ^ a & (c ^ d)) + blocks[4] - 405537848;
+    b = (b << 20 | b >>> 12) + c << 0;
+    a += (c ^ d & (b ^ c)) + blocks[9] + 568446438;
+    a = (a << 5 | a >>> 27) + b << 0;
+    d += (b ^ c & (a ^ b)) + blocks[14] - 1019803690;
+    d = (d << 9 | d >>> 23) + a << 0;
+    c += (a ^ b & (d ^ a)) + blocks[3] - 187363961;
+    c = (c << 14 | c >>> 18) + d << 0;
+    b += (d ^ a & (c ^ d)) + blocks[8] + 1163531501;
+    b = (b << 20 | b >>> 12) + c << 0;
+    a += (c ^ d & (b ^ c)) + blocks[13] - 1444681467;
+    a = (a << 5 | a >>> 27) + b << 0;
+    d += (b ^ c & (a ^ b)) + blocks[2] - 51403784;
+    d = (d << 9 | d >>> 23) + a << 0;
+    c += (a ^ b & (d ^ a)) + blocks[7] + 1735328473;
+    c = (c << 14 | c >>> 18) + d << 0;
+    b += (d ^ a & (c ^ d)) + blocks[12] - 1926607734;
+    b = (b << 20 | b >>> 12) + c << 0;
+    bc = b ^ c;
+    a += (bc ^ d) + blocks[5] - 378558;
+    a = (a << 4 | a >>> 28) + b << 0;
+    d += (bc ^ a) + blocks[8] - 2022574463;
+    d = (d << 11 | d >>> 21) + a << 0;
+    da = d ^ a;
+    c += (da ^ b) + blocks[11] + 1839030562;
+    c = (c << 16 | c >>> 16) + d << 0;
+    b += (da ^ c) + blocks[14] - 35309556;
+    b = (b << 23 | b >>> 9) + c << 0;
+    bc = b ^ c;
+    a += (bc ^ d) + blocks[1] - 1530992060;
+    a = (a << 4 | a >>> 28) + b << 0;
+    d += (bc ^ a) + blocks[4] + 1272893353;
+    d = (d << 11 | d >>> 21) + a << 0;
+    da = d ^ a;
+    c += (da ^ b) + blocks[7] - 155497632;
+    c = (c << 16 | c >>> 16) + d << 0;
+    b += (da ^ c) + blocks[10] - 1094730640;
+    b = (b << 23 | b >>> 9) + c << 0;
+    bc = b ^ c;
+    a += (bc ^ d) + blocks[13] + 681279174;
+    a = (a << 4 | a >>> 28) + b << 0;
+    d += (bc ^ a) + blocks[0] - 358537222;
+    d = (d << 11 | d >>> 21) + a << 0;
+    da = d ^ a;
+    c += (da ^ b) + blocks[3] - 722521979;
+    c = (c << 16 | c >>> 16) + d << 0;
+    b += (da ^ c) + blocks[6] + 76029189;
+    b = (b << 23 | b >>> 9) + c << 0;
+    bc = b ^ c;
+    a += (bc ^ d) + blocks[9] - 640364487;
+    a = (a << 4 | a >>> 28) + b << 0;
+    d += (bc ^ a) + blocks[12] - 421815835;
+    d = (d << 11 | d >>> 21) + a << 0;
+    da = d ^ a;
+    c += (da ^ b) + blocks[15] + 530742520;
+    c = (c << 16 | c >>> 16) + d << 0;
+    b += (da ^ c) + blocks[2] - 995338651;
+    b = (b << 23 | b >>> 9) + c << 0;
+    a += (c ^ (b | ~d)) + blocks[0] - 198630844;
+    a = (a << 6 | a >>> 26) + b << 0;
+    d += (b ^ (a | ~c)) + blocks[7] + 1126891415;
+    d = (d << 10 | d >>> 22) + a << 0;
+    c += (a ^ (d | ~b)) + blocks[14] - 1416354905;
+    c = (c << 15 | c >>> 17) + d << 0;
+    b += (d ^ (c | ~a)) + blocks[5] - 57434055;
+    b = (b << 21 | b >>> 11) + c << 0;
+    a += (c ^ (b | ~d)) + blocks[12] + 1700485571;
+    a = (a << 6 | a >>> 26) + b << 0;
+    d += (b ^ (a | ~c)) + blocks[3] - 1894986606;
+    d = (d << 10 | d >>> 22) + a << 0;
+    c += (a ^ (d | ~b)) + blocks[10] - 1051523;
+    c = (c << 15 | c >>> 17) + d << 0;
+    b += (d ^ (c | ~a)) + blocks[1] - 2054922799;
+    b = (b << 21 | b >>> 11) + c << 0;
+    a += (c ^ (b | ~d)) + blocks[8] + 1873313359;
+    a = (a << 6 | a >>> 26) + b << 0;
+    d += (b ^ (a | ~c)) + blocks[15] - 30611744;
+    d = (d << 10 | d >>> 22) + a << 0;
+    c += (a ^ (d | ~b)) + blocks[6] - 1560198380;
+    c = (c << 15 | c >>> 17) + d << 0;
+    b += (d ^ (c | ~a)) + blocks[13] + 1309151649;
+    b = (b << 21 | b >>> 11) + c << 0;
+    a += (c ^ (b | ~d)) + blocks[4] - 145523070;
+    a = (a << 6 | a >>> 26) + b << 0;
+    d += (b ^ (a | ~c)) + blocks[11] - 1120210379;
+    d = (d << 10 | d >>> 22) + a << 0;
+    c += (a ^ (d | ~b)) + blocks[2] + 718787259;
+    c = (c << 15 | c >>> 17) + d << 0;
+    b += (d ^ (c | ~a)) + blocks[9] - 343485551;
+    b = (b << 21 | b >>> 11) + c << 0;
+
+    if (this.first) {
+      this.h0 = a + 1732584193 << 0;
+      this.h1 = b - 271733879 << 0;
+      this.h2 = c - 1732584194 << 0;
+      this.h3 = d + 271733878 << 0;
+      this.first = false;
+    } else {
+      this.h0 = this.h0 + a << 0;
+      this.h1 = this.h1 + b << 0;
+      this.h2 = this.h2 + c << 0;
+      this.h3 = this.h3 + d << 0;
+    }
+  };
+
+  /**
+      * @method hex
+      * @memberof Md5
+      * @instance
+      * @description Output hash as hex string
+      * @returns {String} Hex string
+      * @see {@link md5.hex}
+      * @example
+      * hash.hex();
+      */
+  Md5.prototype.hex = function () {
+    this.finalize();
+
+    var h0 = this.h0,h1 = this.h1,h2 = this.h2,h3 = this.h3;
+
+    return HEX_CHARS[h0 >> 4 & 0x0F] + HEX_CHARS[h0 & 0x0F] +
+    HEX_CHARS[h0 >> 12 & 0x0F] + HEX_CHARS[h0 >> 8 & 0x0F] +
+    HEX_CHARS[h0 >> 20 & 0x0F] + HEX_CHARS[h0 >> 16 & 0x0F] +
+    HEX_CHARS[h0 >> 28 & 0x0F] + HEX_CHARS[h0 >> 24 & 0x0F] +
+    HEX_CHARS[h1 >> 4 & 0x0F] + HEX_CHARS[h1 & 0x0F] +
+    HEX_CHARS[h1 >> 12 & 0x0F] + HEX_CHARS[h1 >> 8 & 0x0F] +
+    HEX_CHARS[h1 >> 20 & 0x0F] + HEX_CHARS[h1 >> 16 & 0x0F] +
+    HEX_CHARS[h1 >> 28 & 0x0F] + HEX_CHARS[h1 >> 24 & 0x0F] +
+    HEX_CHARS[h2 >> 4 & 0x0F] + HEX_CHARS[h2 & 0x0F] +
+    HEX_CHARS[h2 >> 12 & 0x0F] + HEX_CHARS[h2 >> 8 & 0x0F] +
+    HEX_CHARS[h2 >> 20 & 0x0F] + HEX_CHARS[h2 >> 16 & 0x0F] +
+    HEX_CHARS[h2 >> 28 & 0x0F] + HEX_CHARS[h2 >> 24 & 0x0F] +
+    HEX_CHARS[h3 >> 4 & 0x0F] + HEX_CHARS[h3 & 0x0F] +
+    HEX_CHARS[h3 >> 12 & 0x0F] + HEX_CHARS[h3 >> 8 & 0x0F] +
+    HEX_CHARS[h3 >> 20 & 0x0F] + HEX_CHARS[h3 >> 16 & 0x0F] +
+    HEX_CHARS[h3 >> 28 & 0x0F] + HEX_CHARS[h3 >> 24 & 0x0F];
+  };
+
+  /**
+      * @method toString
+      * @memberof Md5
+      * @instance
+      * @description Output hash as hex string
+      * @returns {String} Hex string
+      * @see {@link md5.hex}
+      * @example
+      * hash.toString();
+      */
+  Md5.prototype.toString = Md5.prototype.hex;
+
+  /**
+                                               * @method digest
+                                               * @memberof Md5
+                                               * @instance
+                                               * @description Output hash as bytes array
+                                               * @returns {Array} Bytes array
+                                               * @see {@link md5.digest}
+                                               * @example
+                                               * hash.digest();
+                                               */
+  Md5.prototype.digest = function () {
+    this.finalize();
+
+    var h0 = this.h0,h1 = this.h1,h2 = this.h2,h3 = this.h3;
+    return [
+    h0 & 0xFF, h0 >> 8 & 0xFF, h0 >> 16 & 0xFF, h0 >> 24 & 0xFF,
+    h1 & 0xFF, h1 >> 8 & 0xFF, h1 >> 16 & 0xFF, h1 >> 24 & 0xFF,
+    h2 & 0xFF, h2 >> 8 & 0xFF, h2 >> 16 & 0xFF, h2 >> 24 & 0xFF,
+    h3 & 0xFF, h3 >> 8 & 0xFF, h3 >> 16 & 0xFF, h3 >> 24 & 0xFF];
+
+  };
+
+  /**
+      * @method array
+      * @memberof Md5
+      * @instance
+      * @description Output hash as bytes array
+      * @returns {Array} Bytes array
+      * @see {@link md5.array}
+      * @example
+      * hash.array();
+      */
+  Md5.prototype.array = Md5.prototype.digest;
+
+  /**
+                                               * @method arrayBuffer
+                                               * @memberof Md5
+                                               * @instance
+                                               * @description Output hash as ArrayBuffer
+                                               * @returns {ArrayBuffer} ArrayBuffer
+                                               * @see {@link md5.arrayBuffer}
+                                               * @example
+                                               * hash.arrayBuffer();
+                                               */
+  Md5.prototype.arrayBuffer = function () {
+    this.finalize();
+
+    var buffer = new ArrayBuffer(16);
+    var blocks = new Uint32Array(buffer);
+    blocks[0] = this.h0;
+    blocks[1] = this.h1;
+    blocks[2] = this.h2;
+    blocks[3] = this.h3;
+    return buffer;
+  };
+
+  /**
+      * @method buffer
+      * @deprecated This maybe confuse with Buffer in node.js. Please use arrayBuffer instead.
+      * @memberof Md5
+      * @instance
+      * @description Output hash as ArrayBuffer
+      * @returns {ArrayBuffer} ArrayBuffer
+      * @see {@link md5.buffer}
+      * @example
+      * hash.buffer();
+      */
+  Md5.prototype.buffer = Md5.prototype.arrayBuffer;
+
+  /**
+                                                     * @method base64
+                                                     * @memberof Md5
+                                                     * @instance
+                                                     * @description Output hash as base64 string
+                                                     * @returns {String} base64 string
+                                                     * @see {@link md5.base64}
+                                                     * @example
+                                                     * hash.base64();
+                                                     */
+  Md5.prototype.base64 = function () {
+    var v1,v2,v3,base64Str = '',bytes = this.array();
+    for (var i = 0; i < 15;) {
+      v1 = bytes[i++];
+      v2 = bytes[i++];
+      v3 = bytes[i++];
+      base64Str += BASE64_ENCODE_CHAR[v1 >>> 2] +
+      BASE64_ENCODE_CHAR[(v1 << 4 | v2 >>> 4) & 63] +
+      BASE64_ENCODE_CHAR[(v2 << 2 | v3 >>> 6) & 63] +
+      BASE64_ENCODE_CHAR[v3 & 63];
+    }
+    v1 = bytes[i];
+    base64Str += BASE64_ENCODE_CHAR[v1 >>> 2] +
+    BASE64_ENCODE_CHAR[v1 << 4 & 63] +
+    '==';
+    return base64Str;
+  };
+
+  var exports = createMethod();
+
+  if (COMMON_JS) {
+    module.exports = exports;
+  } else {
+    /**
+           * @method md5
+           * @description Md5 hash function, export to global in browsers.
+           * @param {String|Array|Uint8Array|ArrayBuffer} message message to hash
+           * @returns {String} md5 hashes
+           * @example
+           * md5(''); // d41d8cd98f00b204e9800998ecf8427e
+           * md5('The quick brown fox jumps over the lazy dog'); // 9e107d9d372bb6826bd81d3542a419d6
+           * md5('The quick brown fox jumps over the lazy dog.'); // e4d909c290d0fb1ca068ffaddf22cbd0
+           *
+           * // It also supports UTF-8 encoding
+           * md5('中文'); // a7bac2239fcdcb3a067903d8077c4a07
+           *
+           * // It also supports byte `Array`, `Uint8Array`, `ArrayBuffer`
+           * md5([]); // d41d8cd98f00b204e9800998ecf8427e
+           * md5(new Uint8Array([])); // d41d8cd98f00b204e9800998ecf8427e
+           */
+    root.md5 = exports;
+    if (AMD) {
+      !(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+        return exports;
+      }).call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+    }
+  }
+})();
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/node-libs-browser/mock/process.js */ 22), __webpack_require__(/*! (webpack)/buildin/global.js */ 2)))
+
+/***/ }),
+/* 22 */
+/*!********************************************************!*\
+  !*** ./node_modules/node-libs-browser/mock/process.js ***!
+  \********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports.nextTick = function nextTick(fn) {
+    var args = Array.prototype.slice.call(arguments);
+    args.shift();
+    setTimeout(function () {
+        fn.apply(null, args);
+    }, 0);
+};
+
+exports.platform = exports.arch = 
+exports.execPath = exports.title = 'browser';
+exports.pid = 1;
+exports.browser = true;
+exports.env = {};
+exports.argv = [];
+
+exports.binding = function (name) {
+	throw new Error('No such module. (Possibly not yet loaded)')
+};
+
+(function () {
+    var cwd = '/';
+    var path;
+    exports.cwd = function () { return cwd };
+    exports.chdir = function (dir) {
+        if (!path) path = __webpack_require__(/*! path */ 23);
+        cwd = path.resolve(dir, cwd);
+    };
+})();
+
+exports.exit = exports.kill = 
+exports.umask = exports.dlopen = 
+exports.uptime = exports.memoryUsage = 
+exports.uvCounters = function() {};
+exports.features = {};
+
+
+/***/ }),
+/* 23 */
+/*!***********************************************!*\
+  !*** ./node_modules/path-browserify/index.js ***!
+  \***********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(process) {// .dirname, .basename, and .extname methods are extracted from Node.js v8.11.1,
+// backported and transplited with Babel, with backwards-compat fixes
+
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+// resolves . and .. elements in a path array with directory names there
+// must be no slashes, empty elements, or device names (c:\) in the array
+// (so also no leading and trailing slashes - it does not distinguish
+// relative and absolute paths)
+function normalizeArray(parts, allowAboveRoot) {
+  // if the path tries to go above the root, `up` ends up > 0
+  var up = 0;
+  for (var i = parts.length - 1; i >= 0; i--) {
+    var last = parts[i];
+    if (last === '.') {
+      parts.splice(i, 1);
+    } else if (last === '..') {
+      parts.splice(i, 1);
+      up++;
+    } else if (up) {
+      parts.splice(i, 1);
+      up--;
+    }
+  }
+
+  // if the path is allowed to go above the root, restore leading ..s
+  if (allowAboveRoot) {
+    for (; up--; up) {
+      parts.unshift('..');
+    }
+  }
+
+  return parts;
+}
+
+// path.resolve([from ...], to)
+// posix version
+exports.resolve = function() {
+  var resolvedPath = '',
+      resolvedAbsolute = false;
+
+  for (var i = arguments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
+    var path = (i >= 0) ? arguments[i] : process.cwd();
+
+    // Skip empty and invalid entries
+    if (typeof path !== 'string') {
+      throw new TypeError('Arguments to path.resolve must be strings');
+    } else if (!path) {
+      continue;
+    }
+
+    resolvedPath = path + '/' + resolvedPath;
+    resolvedAbsolute = path.charAt(0) === '/';
+  }
+
+  // At this point the path should be resolved to a full absolute path, but
+  // handle relative paths to be safe (might happen when process.cwd() fails)
+
+  // Normalize the path
+  resolvedPath = normalizeArray(filter(resolvedPath.split('/'), function(p) {
+    return !!p;
+  }), !resolvedAbsolute).join('/');
+
+  return ((resolvedAbsolute ? '/' : '') + resolvedPath) || '.';
+};
+
+// path.normalize(path)
+// posix version
+exports.normalize = function(path) {
+  var isAbsolute = exports.isAbsolute(path),
+      trailingSlash = substr(path, -1) === '/';
+
+  // Normalize the path
+  path = normalizeArray(filter(path.split('/'), function(p) {
+    return !!p;
+  }), !isAbsolute).join('/');
+
+  if (!path && !isAbsolute) {
+    path = '.';
+  }
+  if (path && trailingSlash) {
+    path += '/';
+  }
+
+  return (isAbsolute ? '/' : '') + path;
+};
+
+// posix version
+exports.isAbsolute = function(path) {
+  return path.charAt(0) === '/';
+};
+
+// posix version
+exports.join = function() {
+  var paths = Array.prototype.slice.call(arguments, 0);
+  return exports.normalize(filter(paths, function(p, index) {
+    if (typeof p !== 'string') {
+      throw new TypeError('Arguments to path.join must be strings');
+    }
+    return p;
+  }).join('/'));
+};
+
+
+// path.relative(from, to)
+// posix version
+exports.relative = function(from, to) {
+  from = exports.resolve(from).substr(1);
+  to = exports.resolve(to).substr(1);
+
+  function trim(arr) {
+    var start = 0;
+    for (; start < arr.length; start++) {
+      if (arr[start] !== '') break;
+    }
+
+    var end = arr.length - 1;
+    for (; end >= 0; end--) {
+      if (arr[end] !== '') break;
+    }
+
+    if (start > end) return [];
+    return arr.slice(start, end - start + 1);
+  }
+
+  var fromParts = trim(from.split('/'));
+  var toParts = trim(to.split('/'));
+
+  var length = Math.min(fromParts.length, toParts.length);
+  var samePartsLength = length;
+  for (var i = 0; i < length; i++) {
+    if (fromParts[i] !== toParts[i]) {
+      samePartsLength = i;
+      break;
+    }
+  }
+
+  var outputParts = [];
+  for (var i = samePartsLength; i < fromParts.length; i++) {
+    outputParts.push('..');
+  }
+
+  outputParts = outputParts.concat(toParts.slice(samePartsLength));
+
+  return outputParts.join('/');
+};
+
+exports.sep = '/';
+exports.delimiter = ':';
+
+exports.dirname = function (path) {
+  if (typeof path !== 'string') path = path + '';
+  if (path.length === 0) return '.';
+  var code = path.charCodeAt(0);
+  var hasRoot = code === 47 /*/*/;
+  var end = -1;
+  var matchedSlash = true;
+  for (var i = path.length - 1; i >= 1; --i) {
+    code = path.charCodeAt(i);
+    if (code === 47 /*/*/) {
+        if (!matchedSlash) {
+          end = i;
+          break;
+        }
+      } else {
+      // We saw the first non-path separator
+      matchedSlash = false;
+    }
+  }
+
+  if (end === -1) return hasRoot ? '/' : '.';
+  if (hasRoot && end === 1) {
+    // return '//';
+    // Backwards-compat fix:
+    return '/';
+  }
+  return path.slice(0, end);
+};
+
+function basename(path) {
+  if (typeof path !== 'string') path = path + '';
+
+  var start = 0;
+  var end = -1;
+  var matchedSlash = true;
+  var i;
+
+  for (i = path.length - 1; i >= 0; --i) {
+    if (path.charCodeAt(i) === 47 /*/*/) {
+        // If we reached a path separator that was not part of a set of path
+        // separators at the end of the string, stop now
+        if (!matchedSlash) {
+          start = i + 1;
+          break;
+        }
+      } else if (end === -1) {
+      // We saw the first non-path separator, mark this as the end of our
+      // path component
+      matchedSlash = false;
+      end = i + 1;
+    }
+  }
+
+  if (end === -1) return '';
+  return path.slice(start, end);
+}
+
+// Uses a mixed approach for backwards-compatibility, as ext behavior changed
+// in new Node.js versions, so only basename() above is backported here
+exports.basename = function (path, ext) {
+  var f = basename(path);
+  if (ext && f.substr(-1 * ext.length) === ext) {
+    f = f.substr(0, f.length - ext.length);
+  }
+  return f;
+};
+
+exports.extname = function (path) {
+  if (typeof path !== 'string') path = path + '';
+  var startDot = -1;
+  var startPart = 0;
+  var end = -1;
+  var matchedSlash = true;
+  // Track the state of characters (if any) we see before our first dot and
+  // after any path separator we find
+  var preDotState = 0;
+  for (var i = path.length - 1; i >= 0; --i) {
+    var code = path.charCodeAt(i);
+    if (code === 47 /*/*/) {
+        // If we reached a path separator that was not part of a set of path
+        // separators at the end of the string, stop now
+        if (!matchedSlash) {
+          startPart = i + 1;
+          break;
+        }
+        continue;
+      }
+    if (end === -1) {
+      // We saw the first non-path separator, mark this as the end of our
+      // extension
+      matchedSlash = false;
+      end = i + 1;
+    }
+    if (code === 46 /*.*/) {
+        // If this is our first dot, mark it as the start of our extension
+        if (startDot === -1)
+          startDot = i;
+        else if (preDotState !== 1)
+          preDotState = 1;
+    } else if (startDot !== -1) {
+      // We saw a non-dot and non-path separator before our dot, so we should
+      // have a good chance at having a non-empty extension
+      preDotState = -1;
+    }
+  }
+
+  if (startDot === -1 || end === -1 ||
+      // We saw a non-dot character immediately before the dot
+      preDotState === 0 ||
+      // The (right-most) trimmed path component is exactly '..'
+      preDotState === 1 && startDot === end - 1 && startDot === startPart + 1) {
+    return '';
+  }
+  return path.slice(startDot, end);
+};
+
+function filter (xs, f) {
+    if (xs.filter) return xs.filter(f);
+    var res = [];
+    for (var i = 0; i < xs.length; i++) {
+        if (f(xs[i], i, xs)) res.push(xs[i]);
+    }
+    return res;
+}
+
+// String.prototype.substr - negative index don't work in IE8
+var substr = 'ab'.substr(-1) === 'b'
+    ? function (str, start, len) { return str.substr(start, len) }
+    : function (str, start, len) {
+        if (start < 0) start = str.length + start;
+        return str.substr(start, len);
+    }
+;
+
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../node-libs-browser/mock/process.js */ 22)))
+
+/***/ }),
+/* 24 */
+/*!****************************************!*\
+  !*** (webpack)/buildin/amd-options.js ***!
+  \****************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/* WEBPACK VAR INJECTION */(function(__webpack_amd_options__) {/* globals __webpack_amd_options__ */
+module.exports = __webpack_amd_options__;
+
+/* WEBPACK VAR INJECTION */}.call(this, {}))
+
+/***/ }),
+/* 25 */
+/*!**************************************!*\
+  !*** F:/365/365-vant/untils/date.js ***!
+  \**************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });exports.calcDate = void 0;var calcDate = function calcDate(date1, date2) {
+  var date3 = date2 - date1;
+
+  var days = Math.floor(date3 / (24 * 3600 * 1000));
+
+  var leave1 = date3 % (24 * 3600 * 1000); //计算天数后剩余的毫秒数
+  var hours = Math.floor(leave1 / (3600 * 1000));
+
+  var leave2 = leave1 % (3600 * 1000); //计算小时数后剩余的毫秒数
+  var minutes = Math.floor(leave2 / (60 * 1000));
+
+  var leave3 = leave2 % (60 * 1000); //计算分钟数后剩余的毫秒数
+  var seconds = Math.round(date3 / 1000);
+  return {
+    leave1: leave1,
+    leave2: leave2,
+    leave3: leave3,
+    days: days,
+    hours: hours,
+    minutes: minutes,
+    seconds: seconds };
+
+};exports.calcDate = calcDate;
+
+/***/ }),
+/* 26 */
+/*!***********************************!*\
+  !*** F:/365/365-vant/api/auth.js ***!
+  \***********************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });exports.docservicecontract = exports.newestLocation = exports.resetAccountIdentity = exports.accountIdentity = exports.roleValid = exports.newCertification = exports.viewContract = exports.checkPass = exports.contractList = exports.resetPass = exports.sendValidate = exports.signGather = exports.isGather = exports.insure = exports.bank = exports.realName = exports.cheakValue = exports.findAuth = void 0;var _AxiosUtils = __webpack_require__(/*! @/untils/AxiosUtils.js */ 13);
+
+
+var _website = _interopRequireDefault(__webpack_require__(/*! @/config/website */ 11));function _interopRequireDefault(obj) {return obj && obj.__esModule ? obj : { default: obj };}
+
+var authUrl = '/api/jobslink-user/user/auth/auth';
+
+var findAuth = function findAuth() {return (0, _AxiosUtils.request)({
+    url: '/api/jobslink-user/user/find',
+    method: 'get' });};exports.findAuth = findAuth;
+
+
+var cheakValue = function cheakValue() {return (0, _AxiosUtils.request)({
+    url: authUrl,
+    method: 'post',
+    data: {
+      cheakvalue: 1,
+      bakvalue: 0 } });};exports.cheakValue = cheakValue;
+
+
+
+var realName = function realName(_realName, idNumber) {return (0, _AxiosUtils.request)({
+    url: authUrl,
+    method: 'post',
+    data: {
+      cheakvalue: 2,
+      realName: _realName,
+      idNumber: idNumber } });};exports.realName = realName;
+
+
+
+var bank = function bank(bankName, realName, cardNumber, def, id) {return (0, _AxiosUtils.request)({
+    url: authUrl,
+    method: 'post',
+    data: {
+      cheakvalue: 3,
+      bankName: bankName,
+      cardNumber: cardNumber,
+      realName: realName,
+      def: def,
+      id: id } });};exports.bank = bank;
+
+
+
+var insure = function insure(bakvalue) {return (0, _AxiosUtils.request)({
+    url: authUrl,
+    method: 'post',
+    data: {
+      cheakvalue: 4,
+      bakvalue: bakvalue } });};
+
+
+
+// 获得灵工的电子签名
+// 返回为空时该用户未采集签名
+exports.insure = insure;var isGather = function isGather() {return (0, _AxiosUtils.request)({
+    url: "/api/jobslink-doc/docUserSeal/isGather",
+    method: 'get' });};
+
+
+// 个人端签名采集
+exports.isGather = isGather;var signGather = function signGather(signSrcUrl, password, confirmPassword) {return (0, _AxiosUtils.request)({
+    url: "/api/jobslink-doc/docUserSeal/signGather",
+    method: 'post',
+    data: {
+      signSrcUrl: signSrcUrl,
+      password: password,
+      confirmPassword: confirmPassword } });};
+
+
+
+// 获取短信接口
+exports.signGather = signGather;var sendValidate = function sendValidate(mobile) {return (0, _AxiosUtils.request)({
+    url: "/api/jobslink-doc/docUserCert/resetPass/sendValidate",
+    method: 'get',
+    data: {
+      mobile: mobile } });};
+
+
+// 密码重置接口
+exports.sendValidate = sendValidate;var resetPass = function resetPass(mobile, code, password) {return (0, _AxiosUtils.request)({
+    url: "/api/jobslink-doc/docUserCert/resetPass",
+    method: 'post',
+    headers: {
+      'SCaptcha-Key': mobile,
+      'SCaptcha-Code': code,
+      'password': password } });};
+
+
+// 我的合同
+exports.resetPass = resetPass;var contractList = function contractList(params) {return (0, _AxiosUtils.request)({
+    url: "/api/jobslink-doc/contract/personal/contractList",
+    method: 'get',
+    data: params });};
+
+// 签名密码  /jobslink-doc/docUserCert/checkPass
+exports.contractList = contractList;var checkPass = function checkPass(params) {return (0, _AxiosUtils.request)({
+    url: "/api/jobslink-doc/docUserCert/checkPass",
+    method: 'get',
+    data: params });};
+
+// 返回的是base64格式的pdf
+exports.checkPass = checkPass;var viewContract = function viewContract(params) {return (0, _AxiosUtils.request)({
+    url: "/api/jobslink-doc/contract/viewContract",
+    method: 'get',
+    data: params });};
+
+
+//新实名认证api
+exports.viewContract = viewContract;var newCertification = function newCertification(bakvalue, realName, idNumber, cardNumber, bankCode, def, bankName) {return (0, _AxiosUtils.request)({
+    url: '/api/jobslink-user/user/auth/authNew',
+    method: 'post',
+    data: {
+      bakvalue: bakvalue,
+      realName: realName,
+      idNumber: idNumber,
+      cardNumber: cardNumber,
+      bankCode: bankCode,
+      def: def,
+      bankName: bankName } });};
+
+
+// 实名认证校验
+exports.newCertification = newCertification;var roleValid = function roleValid(account) {return (0, _AxiosUtils.request)({
+    url: "/api/jobslink-user/account/roleValid",
+    method: 'get',
+    data: { account: account } });};
+
+//登录用户身份
+exports.roleValid = roleValid;var accountIdentity = function accountIdentity() {return (0, _AxiosUtils.request)({
+    url: "/api/jobslink-user/user/t-user/relation/getUserTUserRelation",
+    method: 'get' });};
+
+
+//重置登录用户身份
+exports.accountIdentity = accountIdentity;var resetAccountIdentity = function resetAccountIdentity(data) {return (0, _AxiosUtils.request)({
+    url: "/api/jobslink-user/user/t-user/relation/updateUserTUserRelation",
+    method: 'post',
+    data: data });};
+
+// 个人灵工注册/登录位置信息
+exports.resetAccountIdentity = resetAccountIdentity;var newestLocation = function newestLocation(lat, lon) {return (0, _AxiosUtils.request)({
+    url: "/api/jobslink-user/userPosition/newestLocation",
+    method: 'post',
+    data: {
+      lat: lat,
+      lon: lon } });};
+
+
+
+// 我的服务合同
+exports.newestLocation = newestLocation;var docservicecontract = function docservicecontract(params) {return (0, _AxiosUtils.request)({
+    url: "/api/jobslink-doc/docservicecontract/companylist",
+    method: 'get',
+    data: params });};exports.docservicecontract = docservicecontract;
+
+/***/ }),
+/* 27 */,
+/* 28 */,
+/* 29 */,
+/* 30 */,
+/* 31 */,
+/* 32 */
 /*!**********************************************************************************************************!*\
   !*** ./node_modules/@dcloudio/vue-cli-plugin-uni/packages/vue-loader/lib/runtime/componentNormalizer.js ***!
   \**********************************************************************************************************/
@@ -8782,6 +13756,38 @@ function normalizeComponent (
   }
 }
 
+
+/***/ }),
+/* 33 */
+/*!**************************************!*\
+  !*** F:/365/365-vant/untils/func.js ***!
+  \**************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(uni) {Object.defineProperty(exports, "__esModule", { value: true });exports.default = void 0;function _classCallCheck(instance, Constructor) {if (!(instance instanceof Constructor)) {throw new TypeError("Cannot call a class as a function");}}function _defineProperties(target, props) {for (var i = 0; i < props.length; i++) {var descriptor = props[i];descriptor.enumerable = descriptor.enumerable || false;descriptor.configurable = true;if ("value" in descriptor) descriptor.writable = true;Object.defineProperty(target, descriptor.key, descriptor);}}function _createClass(Constructor, protoProps, staticProps) {if (protoProps) _defineProperties(Constructor.prototype, protoProps);if (staticProps) _defineProperties(Constructor, staticProps);return Constructor;}var windowWidth = uni.getSystemInfoSync().windowWidth;var
+
+func = /*#__PURE__*/function () {function func() {_classCallCheck(this, func);}_createClass(func, null, [{ key: "rpxTopx",
+    /**
+                                                                                                                            * rpx转换为px
+                                                                                                                            * @param rpx
+                                                                                                                            * @returns {number}
+                                                                                                                            */value: function rpxTopx(
+    rpx) {
+      return windowWidth / 750 * rpx;
+    } }]);return func;}();
+
+
+/**
+                            * 通用工具类
+                            */var _default =
+{
+  install: function install(Vue, options) {
+    // 4. 添加实例方法
+    Vue.prototype.$util = func;
+  } };exports.default = _default;
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 1)["default"]))
 
 /***/ })
 ]]);
