@@ -8,6 +8,7 @@
 			<van-button @click='toScan' type="default">去scan</van-button>
 			<van-button @click='toScanInfo' type="primary">主要按钮</van-button>
 		</view>
+		<tab-bar></tab-bar>
 	</basic-container>
 </template>
 

@@ -3,11 +3,13 @@ import App from './App'
 import util from './untils/func.js'
 
 import BasicContainer from './wxcomponents/basic-container/main'
+import TabBar from './wxcomponents/tab-bar/main'
 
 Vue.use(util)
 
 //注册全局容器
 Vue.component('BasicContainer', BasicContainer)
+Vue.component('TabBar', TabBar)
 
 // #ifndef VUE3
 import Vue from 'vue'

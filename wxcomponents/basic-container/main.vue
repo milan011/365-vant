@@ -11,8 +11,7 @@
 			return {
 			}
 		},
-		methods: {
-		}
+		methods: {}
 	}
 </script>
 
@@ -21,7 +20,6 @@
 		height: 100vh;
 		width: 95vw;
 		margin: auto;
-		margin-bottom: 18vh;
 		overflow: auto;
 	}
 </style>

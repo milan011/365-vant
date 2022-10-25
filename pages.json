@@ -7,9 +7,28 @@
 		"usingComponents": {
 			"van-button": "/wxcomponents/vant/button/index",
 			"van-cell": "/wxcomponents/vant/cell/index",
-			"van-cell-group": "/wxcomponents/vant/cell-group/index"
+			"van-cell-group": "/wxcomponents/vant/cell-group/index",
+			"van-tabbar": "/wxcomponents/vant/tabbar/index",
+			"van-tabbar-item": "/wxcomponents/vant/tabbar-item/index",
+			"van-nav-bar": "/wxcomponents/vant/nav-bar/index",
+			"van-sticky": "/wxcomponents/vant/sticky/index"
 		}
 	},
+	/* "tabBar": {
+		"borderStyle": "black",
+		"backgroundColor": "#fff",
+		"color": "#000",
+		"selectedColor": "#1B66FF",
+		"list": [{
+				"pagePath": "pages/index/index",
+				"text": "服务大厅"
+			},
+			{
+					"pagePath": "pages/index/index2",
+					"text": "服务大厅2"
+				}
+		]
+	}, */
 	"easycom": {
 		"autoscan": true
 		/* "custom": {

@@ -1,8 +1,3 @@
-<body>
-	<view class="man-content">
-		
-	</view>
-</body>
 <script>
 	export default {
 		onLaunch: function() {
