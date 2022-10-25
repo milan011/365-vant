@@ -4,7 +4,9 @@ import util from './untils/func.js'
 
 import BasicContainer from './wxcomponents/basic-container/main'
 import TabBar from './wxcomponents/tab-bar/main'
+import { setData } from './untils/common.js'
 
+Vue.prototype.setData = setData;
 Vue.use(util)
 
 //注册全局容器
