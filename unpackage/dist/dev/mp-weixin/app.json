@@ -1,25 +1,26 @@
 {
-    "pages": [
-        "pages/index/index"
-    ],
-    "subPackages": [
-        {
-            "root": "pages/scan",
-            "pages": [
-                "index"
-            ]
-        }
-    ],
-    "window": {
-        "navigationBarTextStyle": "black",
-        "navigationBarTitleText": "uni-app",
-        "navigationBarBackgroundColor": "#F8F8F8",
-        "backgroundColor": "#F8F8F8"
-    },
-    "usingComponents": {
-        "van-button": "/wxcomponents/vant/button/index",
-        "van-cell": "/wxcomponents/vant/cell/index",
-        "van-cell-group": "/wxcomponents/vant/cell-group/index"
-    },
-    "sitemapLocation": "sitemap.json"
+  "pages": [
+    "pages/index/index"
+  ],
+  "subPackages": [
+    {
+      "root": "pages/scan",
+      "pages": [
+        "index",
+        "info"
+      ]
+    }
+  ],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "uni-app",
+    "navigationBarBackgroundColor": "#F8F8F8",
+    "backgroundColor": "#F8F8F8"
+  },
+  "usingComponents": {
+    "van-button": "/wxcomponents/vant/button/index",
+    "van-cell": "/wxcomponents/vant/cell/index",
+    "van-cell-group": "/wxcomponents/vant/cell-group/index",
+    "basic-container": "/wxcomponents/basic-container/main"
+  }
 }

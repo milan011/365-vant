@@ -1,0 +1,21 @@
+{
+	"subPackages": [
+		{
+			"root": "pages/scan",
+			"pages": [
+				{
+					"path": "index",
+					"style": {
+						"navigationBarTitleText": "礼券详情"
+					}
+				},
+				{
+					"path": "info",
+					"style": {
+						"navigationBarTitleText": "礼券详情23"
+					}
+				}
+			]
+		}
+	]
+}

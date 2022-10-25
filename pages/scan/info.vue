@@ -1,14 +1,7 @@
 <template>
-	<basic-container>
-		<view class="content">
-			<image class="logo" src="/static/logo.png"></image>
-			<view class="text-area">
-				<text class="title">{{title}}</text>
-			</view>
-			<van-button @click='toScan' type="default">去scan</van-button>
-			<van-button @click='toScanInfo' type="primary">主要按钮</van-button>
-		</view>
-	</basic-container>
+	<view class="content">
+		<van-button type="primary">scaninfo</van-button>
+	</view>
 </template>
 
 <script>
@@ -22,16 +15,7 @@
 
 		},
 		methods: {
-			toScan(){
-				uni.navigateTo({
-					url: '/pages/scan/index'
-				})
-			},		
-			toScanInfo(){
-				uni.navigateTo({
-					url: '/pages/scan/info'
-				})
-			}
+
 		}
 	}
 </script>

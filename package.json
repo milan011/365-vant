@@ -14,5 +14,7 @@
     "js-md5": "^0.7.3",
     "moment": "^2.29.4"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@ctrlc/uni-module-pages": "^1.1.1"
+  }
 }

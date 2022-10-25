@@ -2,7 +2,12 @@ import store from './store';
 import App from './App'
 import util from './untils/func.js'
 
+import BasicContainer from './wxcomponents/basic-container/main'
+
 Vue.use(util)
+
+//注册全局容器
+Vue.component('BasicContainer', BasicContainer)
 
 // #ifndef VUE3
 import Vue from 'vue'

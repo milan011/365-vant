@@ -13,6 +13,11 @@
 
 
 
+
+
+
+
+
 /*每个页面公共css */
 .van-ellipsis{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .van-multi-ellipsis--l2{-webkit-line-clamp:2}
