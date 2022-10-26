@@ -1,6 +1,12 @@
 <template>
 	<view class="content">
 		<van-button type="primary">scaninfo</van-button>
+		<view>
+			<van-popup position="bottom">
+				<van-picker :columns="columns"/>
+			</van-popup>
+			<van-slider value="50" />
+		</view>
 	</view>
 </template>
 

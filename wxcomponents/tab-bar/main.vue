@@ -30,5 +30,8 @@
 	}
 </script>
 
-<style>
+<style scoped>
+	::v-deep .van-hairline--top-bottom{
+		position: fixed;
+	}
 </style>

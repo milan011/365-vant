@@ -5,8 +5,14 @@ import util from './untils/func.js'
 import BasicContainer from './wxcomponents/basic-container/main'
 import TabBar from './wxcomponents/tab-bar/main'
 import { setData } from './untils/common.js'
+import Toast from './wxcomponents/vant/toast/toast';
+import Dialog from './wxcomponents/vant/dialog/dialog';
+import Notify from './wxcomponents/vant/notify/notify';
 
 Vue.prototype.setData = setData;
+Vue.prototype.$notify = Notify;
+Vue.prototype.$toast = Toast;
+Vue.prototype.$dialog = Dialog;
 Vue.use(util)
 
 //注册全局容器
